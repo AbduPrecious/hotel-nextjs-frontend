@@ -1,0 +1,165 @@
+/* app/carmelina.css */
+
+/* ─── Cards ──────────────────────────────────────────────────── */
+.carmelina-card {
+  background: #1A1A1A;
+  border: 1px solid #333333;
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.carmelina-card:hover {
+  border-color: #C8A87C;
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.carmelina-card .card-image {
+  overflow: hidden;
+  position: relative;
+}
+.carmelina-card .card-image img {
+  transition: transform 0.7s ease-out;
+}
+.carmelina-card:hover .card-image img {
+  transform: scale(1.08);
+}
+.carmelina-card .card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
+  opacity: 0.6;
+  transition: opacity 0.4s ease;
+}
+.carmelina-card:hover .card-overlay {
+  opacity: 0.3;
+}
+
+/* ─── Buttons ────────────────────────────────────────────────── */
+.btn-gold {
+  background: linear-gradient(135deg, #C8A87C 0%, #E8D5B8 50%, #C8A87C 100%);
+  background-size: 200% 200%;
+  color: #0A0A0A;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  border: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+.btn-gold:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 40px rgba(200, 168, 124, 0.3);
+  background-position: 100% 100%;
+}
+.btn-outline-gold {
+  border: 2px solid #C8A87C;
+  color: #F5F5F5;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  background: transparent;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+.btn-outline-gold:hover {
+  background: #C8A87C;
+  color: #0A0A0A;
+  transform: scale(1.05);
+  box-shadow: 0 10px 40px rgba(200, 168, 124, 0.2);
+}
+
+/* ─── Section Headers ───────────────────────────────────────── */
+.section-tag {
+  color: #C8A87C;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #F5F5F5;
+  line-height: 1.2;
+}
+@media (min-width: 768px) {
+  .section-title { font-size: 3rem; }
+}
+@media (min-width: 1024px) {
+  .section-title { font-size: 3.5rem; }
+}
+.section-divider {
+  width: 4rem;
+  height: 0.25rem;
+  background: linear-gradient(90deg, #C8A87C 0%, #E8D5B8 100%);
+  border-radius: 9999px;
+  margin: 1rem auto 0;
+}
+
+/* ─── Gold Link ─────────────────────────────────────────────── */
+.link-gold {
+  color: #C8A87C;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  width: fit-content;
+}
+.link-gold:hover {
+  gap: 0.75rem;
+  color: #E8D5B8;
+}
+.link-gold svg {
+  transition: transform 0.3s ease;
+}
+.link-gold:hover svg {
+  transform: translateX(4px);
+}
+
+/* ─── Animations ────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroZoom {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.05); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+.animate-fade-in-delay {
+  animation: fadeIn 0.8s ease-out 0.2s forwards;
+  opacity: 0;
+}
+.animate-fade-in-delay-2 {
+  animation: fadeIn 0.8s ease-out 0.4s forwards;
+  opacity: 0;
+}
+.animate-hero-zoom {
+  animation: heroZoom 15s ease-in-out infinite alternate;
+}
+
+/* ─── Navbar Alignment Fix ──────────────────────────────────── */
+nav .flex.items-center img,
+nav .flex.items-center span {
+  vertical-align: middle;
+}
+nav .flex.items-center img {
+  display: block;
+}
+nav .flex.items-center span {
+  line-height: 1;
+}
