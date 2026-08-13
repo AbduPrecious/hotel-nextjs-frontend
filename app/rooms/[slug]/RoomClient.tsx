@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // ✅ Added Router
+import { useRouter } from 'next/navigation';
 import { renderRichText } from '../../lib/api';
+import { useAlert } from '../../context/AlertContext';
+import { BedIcon, GuestIcon } from '../../components/Icons';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const GOLD = '#B69B78';
@@ -109,7 +111,8 @@ function ImageLightbox({ images, initialIndex, onClose }: {
 }
 
 export default function RoomClient({ room, heroImage }: { room: any; heroImage: string | null }) {
-  const router = useRouter(); // ✅ Initialize Router
+  const router = useRouter();
+  const { showAlert } = useAlert();
 
   // ─── Responsive Breakpoint Hook ──────────────────────────────
   const [screenWidth, setScreenWidth] = useState(0);
@@ -155,11 +158,11 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ─── Redirect to Checkout Page ──────────────────────────────
+   // ─── Redirect to Checkout Page ──────────────────────────────
   const handleProceedToCheckout = () => {
     // 1. Required fields validation
     if (!formData.name || !formData.email || !formData.phone || !formData.check_in || !formData.check_out) {
-      alert('Please fill out all required fields before proceeding to checkout.');
+      showAlert('Please fill out all required fields before proceeding to checkout.', 'warning');
       return;
     }
 
@@ -167,17 +170,20 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
     const checkInDate = new Date(formData.check_in);
     const checkOutDate = new Date(formData.check_out);
     if (checkOutDate <= checkInDate) {
-      alert('❌ Check-out must be after check-in.');
+      showAlert('Check‑out must be after check‑in.', 'error');
       return;
     }
 
-    // 3. Redirect to Checkout with parameters
+    // 3. Redirect to Checkout with parameters (INCLUDING NAME, EMAIL, PHONE)
     const params = new URLSearchParams({
       roomId: roomData.documentId || roomData.id,
       checkIn: formData.check_in,
       checkOut: formData.check_out,
-      adults: '1', // You can make this dynamic later if you want
+      adults: '1',
       children: '0',
+      name: formData.name,       // ✅ Added to pass to checkout
+      email: formData.email,     // ✅ Added to pass to checkout
+      phone: formData.phone,     // ✅ Added to pass to checkout
     });
 
     router.push(`/checkout?${params.toString()}`);
@@ -187,52 +193,58 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
   const goToNextPhoto = () => setCurrentPhotoIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
 
   return (
-    <div style={{ minHeight: '100vh', background: BEIGE, color: '#1A1A1A', paddingTop: isMobile ? '56px' : '64px' }}>
+    <div style={{ minHeight: '100vh', background: BEIGE, color: '#1A1A1A', paddingTop: isMobile ? '5rem' : '6.5rem' }}>
       <style>{`
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .room-hero {
-          position: relative;
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeInUp 0.8s ease forwards; opacity: 0; }
+
+        /* ─── Contact-style hero ──────────────────────────────── */
+        .contact-hero {
           background: ${DARK_NAVY};
-          padding: 3rem 0 2rem;
+          padding: 3rem 1rem;
+          text-align: center;
+          border-bottom: 3px solid ${GOLD};
         }
-        .room-hero .container {
-          max-width: 1152px;
-          margin: 0 auto;
-          padding: 0 1rem;
-        }
-        .room-hero .breadcrumb {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
+        .contact-hero .breadcrumb {
           font-size: 0.7rem;
           color: ${GOLD};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
           text-transform: uppercase;
           letter-spacing: 0.1em;
-          margin-bottom: 0.75rem;
+          margin-bottom: 0.5rem;
         }
-        .room-hero .breadcrumb a {
+        .contact-hero .breadcrumb a {
           color: ${GOLD};
           text-decoration: none;
           transition: color 0.3s ease;
         }
-        .room-hero .breadcrumb a:hover { color: white; }
-        .room-hero .breadcrumb span { color: #555; }
-        .room-hero h1 {
-      
-          font-size: 2.2rem;
-          font-weight: 600;
+        .contact-hero .breadcrumb a:hover { color: white; }
+        .contact-hero h1 {
+          font-size: 2.5rem;
+          font-weight: 700;
           color: white;
           margin-bottom: 0.25rem;
+          letter-spacing: 0.02em;
         }
-        .room-hero .subtitle {
-          font-size: 0.8rem;
-          color: rgba(255,255,255,0.6);
-          letter-spacing: 0.05em;
+        .contact-hero p {
+          font-size: 0.9rem;
+          color: rgba(255,255,255,0.7);
+          max-width: 672px;
+          margin: 0 auto;
+          font-weight: 300;
+          line-height: 1.6;
         }
         @media (max-width: 768px) {
-          .room-hero { padding: 2rem 0 1.5rem; }
-          .room-hero h1 { font-size: 1.8rem; }
+          .contact-hero h1 { font-size: 2rem; }
         }
+
         .form-input {
           width: 100%;
           padding: 0.5rem 0.75rem;
@@ -272,20 +284,21 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
         }
       `}</style>
 
-      <div className="room-hero">
-        <div className="container">
-          <div className="breadcrumb">
-            <Link href="/">Home</Link>
-            <span>/</span>
-            <Link href="/rooms">Rooms</Link>
-            <span>/</span>
-            <span style={{ color: 'white' }}>{roomData.title}</span>
-          </div>
-          <h1>{roomData.title}</h1>
-          <div className="subtitle">
-            •{roomData.capacity || 4} Guests • {roomData.bed_type || '2 Bedrooms'}
-          </div>
+      {/* ─── HERO (Contact page style) ─── */}
+      <div className="contact-hero animate-in" style={{ padding: isMobile ? '4rem 1rem' : '5rem 1rem' }}>
+        <div className="breadcrumb">
+          <Link href="/">Home</Link>
+          <span>/</span>
+          <Link href="/rooms">Rooms</Link>
+          <span>/</span>
+          <span style={{ color: '#FFFFFF' }}>{roomData.title}</span>
         </div>
+        <h1>{roomData.title}</h1>
+        <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <GuestIcon size={16} color="rgba(255,255,255,0.7)" /> {roomData.capacity || 4} Guests
+         
+          <BedIcon size={16} color="rgba(255,255,255,0.7)" /> {roomData.bed_type || '2 Bedrooms'}
+        </p>
       </div>
 
       <div style={{ maxWidth: '1152px', margin: '0 auto', padding: isMobile ? '1.5rem 1rem' : '2rem 1rem' }}>

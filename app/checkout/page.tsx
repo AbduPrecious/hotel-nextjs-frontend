@@ -1,15 +1,29 @@
-// app/checkout/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getRoomById } from '../lib/api';
+import ScrollReveal from '../components/ScrollReveal';
+import { useAlert } from '../context/AlertContext';
+import { BedIcon, GuestIcon } from '../components/Icons';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const GOLD = '#C8A87C';
 const DARK_NAVY = '#17232E';
 const BEIGE = '#ECEAE6';
+
+function getMediaUrl(media: any) {
+  if (!media) return null;
+  if (media.url) return media.url;
+  if (media.data?.attributes?.url) return media.data.attributes.url;
+  if (media.data?.url) return media.data.url;
+  if (media.attributes?.url) return media.attributes.url;
+  if (Array.isArray(media) && media.length > 0) {
+    return getMediaUrl(media[0]);
+  }
+  return null;
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -17,24 +31,33 @@ export default function CheckoutPage() {
   const roomId = searchParams.get('roomId');
   const checkInParam = searchParams.get('checkIn');
   const checkOutParam = searchParams.get('checkOut');
-  const adultsParam = searchParams.get('adults');
-  const childrenParam = searchParams.get('children');
+  const nameParam = searchParams.get('name') || '';
+  const emailParam = searchParams.get('email') || '';
+  const phoneParam = searchParams.get('phone') || '';
 
   const [room, setRoom] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // ─── Form State ─────────────────────────────────────────────
+  const [paymentMethods, setPaymentMethods] = useState<any>(null);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+  const { showAlert } = useAlert();
+
+  const goToPrevPhoto = () =>
+    setCurrentPhotoIndex((prev) => (prev === 0 ? room.photos.length - 1 : prev - 1));
+  const goToNextPhoto = () =>
+    setCurrentPhotoIndex((prev) => (prev === room.photos.length - 1 ? 0 : prev + 1));
+
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    payment_method: 'screenshot',
+    name: nameParam,
+    email: emailParam,
+    phone: phoneParam,
+    payment_method: 'bank_transfer',
     screenshot: null as File | null,
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // ─── Responsive Hook ────────────────────────────────────────
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     setIsMobile(window.innerWidth < 768);
@@ -42,15 +65,24 @@ export default function CheckoutPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // ─── Fetch Room Data ──────────────────────────────────────
   useEffect(() => {
-    async function fetchRoom() {
+    async function fetchData() {
       if (!roomId) return;
-      const data = await getRoomById(roomId);
-      setRoom(data);
-      setLoading(false);
+      try {
+        const [roomData, paymentRes] = await Promise.all([
+          getRoomById(roomId),
+          fetch(`${STRAPI_URL}/api/payment-method?populate=*`),
+        ]);
+        setRoom(roomData);
+        const paymentJson = await paymentRes.json();
+        setPaymentMethods(paymentJson.data?.attributes || paymentJson.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        setLoading(false);
+      }
     }
-    fetchRoom();
+    fetchData();
   }, [roomId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -90,14 +122,14 @@ export default function CheckoutPage() {
     const checkInDate = new Date(checkInParam!);
     const checkOutDate = new Date(checkOutParam!);
     if (checkOutDate <= checkInDate) {
-      alert('❌ Check-out must be after check-in.');
+      showAlert('Check‑out must be after check‑in.', 'error');
       setSubmitting(false);
       return;
     }
 
-    const paymentMethod = formData.payment_method === 'cash' ? 'cash' : 'screenshot';
-    if (paymentMethod === 'screenshot' && !formData.screenshot) {
-      alert('❌ Please upload a payment screenshot.');
+    const paymentMethod = formData.payment_method;
+    if (paymentMethod === 'bank_transfer' && !formData.screenshot) {
+      showAlert('Please upload the bank transfer receipt or screenshot.', 'warning');
       setSubmitting(false);
       return;
     }
@@ -106,11 +138,12 @@ export default function CheckoutPage() {
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
-      room: room.id,
+      room: room.documentId, // Strapi v5 uses documentId
       check_in: checkInParam,
       check_out: checkOutParam,
       total: Number(total),
       booking_status: 'Pending',
+      payment_method: paymentMethod,
     };
 
     try {
@@ -120,11 +153,17 @@ export default function CheckoutPage() {
         body: JSON.stringify({ data: bookingData }),
       });
 
-      if (!res.ok) throw new Error(`Strapi error (${res.status})`);
-      const responseData = await res.json();
+      const responseText = await res.text();
+
+      if (!res.ok) {
+        console.error('❌ Strapi error:', responseText);
+        throw new Error(`Strapi error (${res.status}): ${responseText}`);
+      }
+
+      const responseData = JSON.parse(responseText);
       const docId = responseData?.data?.documentId;
 
-      if (paymentMethod === 'screenshot' && formData.screenshot && docId) {
+      if (paymentMethod === 'bank_transfer' && formData.screenshot && docId) {
         const fileFormData = new FormData();
         fileFormData.append('files', formData.screenshot);
         const uploadRes = await fetch(`${STRAPI_URL}/api/upload`, {
@@ -144,7 +183,6 @@ export default function CheckoutPage() {
         }
       }
 
-      // Redirect to confirmation with query params
       const params = new URLSearchParams({
         name: formData.name,
         email: formData.email,
@@ -156,106 +194,791 @@ export default function CheckoutPage() {
       });
       router.push(`/booking-confirmation?${params.toString()}`);
     } catch (error: any) {
-      alert(`❌ ${error.message}`);
+      showAlert(error.message, 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
+  const buildImageUrl = (relativeOrAbsolute: string | null) => {
+    if (!relativeOrAbsolute) return null;
+    if (relativeOrAbsolute.startsWith('http')) return relativeOrAbsolute;
+    const base = STRAPI_URL.endsWith('/') ? STRAPI_URL.slice(0, -1) : STRAPI_URL;
+    const path = relativeOrAbsolute.startsWith('/') ? relativeOrAbsolute : `/${relativeOrAbsolute}`;
+    return `${base}${path}`;
+  };
+
+  const cbeQrUrl = buildImageUrl(getMediaUrl(paymentMethods?.cbe_qr_code));
+  const telebirrQrUrl = buildImageUrl(getMediaUrl(paymentMethods?.telebirr_qr_code));
+
+  useEffect(() => {
+    if (!cbeQrUrl) console.warn('⚠️ CBE QR Image is missing in Strapi (field: cbe_qr_code)');
+    if (!telebirrQrUrl) console.warn('⚠️ Telebirr QR Image is missing in Strapi (field: telebirr_qr_code)');
+  }, [cbeQrUrl, telebirrQrUrl]);
+
   if (loading) {
-    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BEIGE,}}>Loading Checkout...</div>;
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: BEIGE,
+        }}
+      >
+        Loading Checkout...
+      </div>
+    );
   }
 
   if (!room || !roomId) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BEIGE, padding: '1rem', }}>
-        <div style={{ background: '#FFFFFF', borderRadius: '1rem', padding: '2rem', textAlign: 'center', maxWidth: '400px' }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: BEIGE,
+          padding: '1rem',
+        }}
+      >
+        <div
+          style={{
+            background: '#FFFFFF',
+            borderRadius: '1rem',
+            padding: '2rem',
+            textAlign: 'center',
+            maxWidth: '400px',
+          }}
+        >
           <h2 style={{ color: DARK_NAVY }}>Oops!</h2>
           <p style={{ color: '#666' }}>No room selected. Please select a room to book.</p>
-          <Link href="/rooms" style={{ display: 'inline-block', background: DARK_NAVY, color: '#FFFFFF', padding: '0.7rem 2rem', borderRadius: '9999px', textDecoration: 'none', marginTop: '1rem' }}>Browse Rooms</Link>
+          <Link
+            href="/rooms"
+            style={{
+              display: 'inline-block',
+              background: DARK_NAVY,
+              color: '#FFFFFF',
+              padding: '0.7rem 2rem',
+              borderRadius: '9999px',
+              textDecoration: 'none',
+              marginTop: '1rem',
+            }}
+          >
+            Browse Rooms
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: BEIGE, paddingTop: isMobile ? '8rem' : '9rem', paddingBottom: '3rem', boxSizing: 'border-box',}}>
-      <div style={{ maxWidth: '1180px', margin: '0 auto', padding: '0 1rem' }}>
-        <h2 style={{fontSize: '2rem', color: DARK_NAVY, fontWeight: 700, marginBottom: '2rem', textAlign: 'center' }}>
-          Checkout
-        </h2>
+    <>
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeInUp 0.8s ease forwards; opacity: 0; }
 
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '2rem' }}>
-          {/* ─── LEFT SIDE: Review Summary ──────────────────────── */}
-          <div style={{ background: '#FFFFFF', borderRadius: '1.5rem', padding: '1.5rem', boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
-            <h3 style={{fontSize: '1.25rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '1rem' }}>Booking Summary</h3>
-            <div style={{ display: 'flex', gap: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #E8E8E8' }}>
-              {room.photos?.[0]?.url && (
-                <img src={`${STRAPI_URL}${room.photos[0].url}`} alt={room.title} style={{ width: '100px', height: '70px', objectFit: 'cover', borderRadius: '0.5rem' }} />
-              )}
-              <div>
-                <h4 style={{ fontWeight: 600, fontSize: '1.1rem', color: DARK_NAVY }}>{room.title}</h4>
-                <p style={{ color: '#666', fontSize: '0.85rem' }}>{room.capacity || 4} Guests • {room.bed_type || '2 Beds'}</p>
-              </div>
-            </div>
-            <div style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#555' }}>
-                <span>Check-in:</span> <span>{checkInParam ? new Date(checkInParam).toLocaleDateString() : 'N/A'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#555' }}>
-                <span>Check-out:</span> <span>{checkOutParam ? new Date(checkOutParam).toLocaleDateString() : 'N/A'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#555' }}>
-                <span>Nights:</span> <span>{nights}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 700, color: DARK_NAVY, marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #E8E8E8' }}>
-                <span>Total Price:</span> <span style={{ color: GOLD }}>ETB {total}</span>
-              </div>
-            </div>
+        /* ─── Contact-style hero ──────────────────────────────── */
+        .contact-hero {
+          background: ${DARK_NAVY};
+          padding: 3rem 1rem;
+          text-align: center;
+          border-bottom: 3px solid ${GOLD};
+        }
+        .contact-hero .breadcrumb {
+          font-size: 0.7rem;
+          color: ${GOLD};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-bottom: 0.5rem;
+        }
+        .contact-hero .breadcrumb a {
+          color: ${GOLD};
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+        .contact-hero .breadcrumb a:hover { color: white; }
+        .contact-hero h1 {
+          font-size: 2.5rem;
+          font-weight: 700;
+          color: white;
+          margin-bottom: 0.25rem;
+          letter-spacing: 0.02em;
+        }
+        .contact-hero p {
+          font-size: 0.9rem;
+          color: rgba(255,255,255,0.7);
+          max-width: 672px;
+          margin: 0 auto;
+          font-weight: 300;
+          line-height: 1.6;
+        }
+        @media (max-width: 768px) {
+          .contact-hero h1 { font-size: 2rem; }
+        }
+      `}</style>
+
+      <div style={{ minHeight: '100vh', background: BEIGE, paddingTop: isMobile ? '5rem' : '6.5rem' }}>
+        {/* ─── HERO (Contact page style) ─── */}
+        <div className="contact-hero animate-in" style={{ padding: isMobile ? '4rem 1rem' : '5rem 1rem' }}>
+          <div className="breadcrumb">
+            <Link href="/">Home</Link>
+            <span>/</span>
+            <Link href="/rooms">Rooms</Link>
+            <span>/</span>
+            <Link href={`/rooms/${room.documentId || room.id}`}>{room.title}</Link>
+            <span>/</span>
+            <span style={{ color: '#FFFFFF' }}>Checkout</span>
           </div>
+          <h1>{room.title}</h1>
+          <p>
+            {checkInParam && checkOutParam
+              ? `Check-in: ${new Date(checkInParam).toLocaleDateString()}  |  Check-out: ${new Date(checkOutParam).toLocaleDateString()}`
+              : 'Complete your booking'}
+          </p>
+        </div>
 
-          {/* ─── RIGHT SIDE: Guest Details Form ────────────────── */}
-          <form onSubmit={handleSubmit} style={{ background: '#FFFFFF', borderRadius: '1.5rem', padding: '1.5rem', boxShadow: '0 10px 40px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h3 style={{fontSize: '1.25rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '0.5rem' }}>Guest Details</h3>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1rem' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+              gap: '2rem',
+            }}
+          >
+            {/* LEFT: Room Summary */}
+            <ScrollReveal delay={100}>
+              <div
+                style={{
+                  background: '#FFFFFF',
+                  borderRadius: '1.5rem',
+                  padding: '1.5rem',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                }}
+              >
+                {room.photos && room.photos.length > 0 ? (
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: isMobile ? '220px' : '300px',
+                      borderRadius: '1rem',
+                      overflow: 'hidden',
+                      background: '#F0F0F0',
+                    }}
+                  >
+                    <img
+                      src={`${STRAPI_URL}${room.photos[currentPhotoIndex].url}`}
+                      alt={`${room.title} - slide ${currentPhotoIndex + 1}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '1rem',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: 'rgba(0,0,0,0.6)',
+                        color: 'white',
+                        padding: '0.2rem 0.8rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.8rem',
+                      }}
+                    >
+                      {currentPhotoIndex + 1} / {room.photos.length}
+                    </div>
+                    <button
+                      onClick={goToPrevPhoto}
+                      style={{
+                        position: 'absolute',
+                        left: '0.5rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'rgba(0,0,0,0.5)',
+                        backdropFilter: 'blur(4px)',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: isMobile ? '32px' : '40px',
+                        height: isMobile ? '32px' : '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        zIndex: 5,
+                        fontSize: isMobile ? '1rem' : '1.2rem',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = GOLD;
+                        e.currentTarget.style.color = DARK_NAVY;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(0,0,0,0.5)';
+                        e.currentTarget.style.color = 'white';
+                      }}
+                    >
+                      ‹
+                    </button>
+                    <button
+                      onClick={goToNextPhoto}
+                      style={{
+                        position: 'absolute',
+                        right: '0.5rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'rgba(0,0,0,0.5)',
+                        backdropFilter: 'blur(4px)',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: isMobile ? '32px' : '40px',
+                        height: isMobile ? '32px' : '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        zIndex: 5,
+                        fontSize: isMobile ? '1rem' : '1.2rem',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = GOLD;
+                        e.currentTarget.style.color = DARK_NAVY;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(0,0,0,0.5)';
+                        e.currentTarget.style.color = 'white';
+                      }}
+                    >
+                      ›
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      width: '100%',
+                      height: isMobile ? '220px' : '300px',
+                      background: '#F0F0F0',
+                      borderRadius: '1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#999',
+                    }}
+                  >
+                    No Room Image
+                  </div>
+                )}
+                <div>
+                  <h3
+                    style={{
+                      fontSize: '1.3rem',
+                      fontWeight: 600,
+                      color: DARK_NAVY,
+                      marginBottom: '0.25rem',
+                    }}
+                  >
+                    {room.title}
+                  </h3>
+                  <p
+                    style={{
+                      color: '#666',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <GuestIcon size={16} color="#666" /> {room.capacity || 4} Guests
+                    <span style={{ color: '#ccc' }}></span>
+                    <BedIcon size={16} color="#666" /> {room.bed_type || '2 Beds'}
+                  </p>
+                </div>
 
-            <div>
-              <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#777', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.35rem' }}>Full Name *</label>
-              <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="John Doe" required style={{ width: '100%', padding: '0.7rem', border: '1px solid #E0E0E0', borderRadius: '0.5rem', outline: 'none', transition: 'border 0.3s ease' }} onFocus={(e) => e.currentTarget.style.borderColor = GOLD} onBlur={(e) => e.currentTarget.style.borderColor = '#E0E0E0'} />
-            </div>
-            <div>
-              <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#777', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.35rem' }}>Email *</label>
-              <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="you@example.com" required style={{ width: '100%', padding: '0.7rem', border: '1px solid #E0E0E0', borderRadius: '0.5rem', outline: 'none', transition: 'border 0.3s ease' }} onFocus={(e) => e.currentTarget.style.borderColor = GOLD} onBlur={(e) => e.currentTarget.style.borderColor = '#E0E0E0'} />
-            </div>
-            <div>
-              <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#777', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.35rem' }}>Phone Number *</label>
-              <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="+251 911 123 456" required style={{ width: '100%', padding: '0.7rem', border: '1px solid #E0E0E0', borderRadius: '0.5rem', outline: 'none', transition: 'border 0.3s ease' }} onFocus={(e) => e.currentTarget.style.borderColor = GOLD} onBlur={(e) => e.currentTarget.style.borderColor = '#E0E0E0'} />
-            </div>
-
-            <div>
-              <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#777', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.35rem' }}>Payment Method *</label>
-              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '0.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', border: `2px solid ${formData.payment_method === 'screenshot' ? GOLD : '#E0E0E0'}`, borderRadius: '0.5rem', cursor: 'pointer', background: formData.payment_method === 'screenshot' ? '#F9F6F0' : 'transparent', flex: 1, justifyContent: 'center' }}>
-                  <input type="radio" name="payment_method" value="screenshot" checked={formData.payment_method === 'screenshot'} onChange={handlePaymentMethodChange} /> Screenshot
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', border: `2px solid ${formData.payment_method === 'cash' ? GOLD : '#E0E0E0'}`, borderRadius: '0.5rem', cursor: 'pointer', background: formData.payment_method === 'cash' ? '#F9F6F0' : 'transparent', flex: 1, justifyContent: 'center' }}>
-                  <input type="radio" name="payment_method" value="cash" checked={formData.payment_method === 'cash'} onChange={handlePaymentMethodChange} /> Cash on Arrival
-                </label>
+                <div
+                  style={{
+                    borderTop: '1px solid #E8E8E8',
+                    paddingTop: '1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#555' }}>
+                    <span>Check-in:</span>
+                    <span style={{ fontWeight: 500, color: DARK_NAVY }}>
+                      {checkInParam ? new Date(checkInParam).toLocaleDateString() : 'N/A'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#555' }}>
+                    <span>Check-out:</span>
+                    <span style={{ fontWeight: 500, color: DARK_NAVY }}>
+                      {checkOutParam ? new Date(checkOutParam).toLocaleDateString() : 'N/A'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#555' }}>
+                    <span>Nights:</span>
+                    <span style={{ fontWeight: 500, color: DARK_NAVY }}>{nights}</span>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '1.2rem',
+                      fontWeight: 700,
+                      color: DARK_NAVY,
+                      marginTop: '0.5rem',
+                      paddingTop: '0.5rem',
+                      borderTop: '1px solid #E8E8E8',
+                    }}
+                  >
+                    <span>Total Price:</span>
+                    <span style={{ color: GOLD }}>ETB {total}</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            </ScrollReveal>
 
-            {formData.payment_method === 'screenshot' && (
-              <div>
-                <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#777', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.35rem' }}>Payment Screenshot *</label>
-                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} required style={{ width: '100%', padding: '0.5rem', border: '1px dashed #E0E0E0', borderRadius: '0.5rem', outline: 'none' }} />
-              </div>
-            )}
+            {/* RIGHT: Form */}
+            <ScrollReveal delay={300}>
+              <form
+                onSubmit={handleSubmit}
+                style={{
+                  background: '#FFFFFF',
+                  borderRadius: '1.5rem',
+                  padding: '1.5rem',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                }}
+              >
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '0.25rem' }}>
+                  Guest Details
+                </h3>
 
-            <button type="submit" disabled={submitting} style={{ width: '100%', padding: '0.85rem', background: DARK_NAVY, color: '#FFFFFF', fontWeight: 700, border: 'none', borderRadius: '0.5rem', fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.3s ease', marginTop: '0.5rem' }} onMouseEnter={(e) => { if (!submitting) { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = DARK_NAVY; } }} onMouseLeave={(e) => { if (!submitting) { e.currentTarget.style.background = DARK_NAVY; e.currentTarget.style.color = '#FFFFFF'; } }}>
-              {submitting ? 'Processing...' : 'Confirm Booking'}
-            </button>
-          </form>
+                <div>
+                  <label
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      color: '#777',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      display: 'block',
+                      marginBottom: '0.35rem',
+                    }}
+                  >
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="John Doe"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.7rem',
+                      border: '1px solid #E0E0E0',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      transition: 'border 0.3s ease',
+                    }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = GOLD)}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = '#E0E0E0')}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      color: '#777',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      display: 'block',
+                      marginBottom: '0.35rem',
+                    }}
+                  >
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="you@example.com"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.7rem',
+                      border: '1px solid #E0E0E0',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      transition: 'border 0.3s ease',
+                    }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = GOLD)}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = '#E0E0E0')}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      color: '#777',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      display: 'block',
+                      marginBottom: '0.35rem',
+                    }}
+                  >
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="+251 911 123 456"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.7rem',
+                      border: '1px solid #E0E0E0',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      transition: 'border 0.3s ease',
+                    }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = GOLD)}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = '#E0E0E0')}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      color: '#777',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      display: 'block',
+                      marginBottom: '0.35rem',
+                    }}
+                  >
+                    Payment Method *
+                  </label>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: isMobile ? 'column' : 'row',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        border: `2px solid ${formData.payment_method === 'bank_transfer' ? GOLD : '#E0E0E0'}`,
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        background: formData.payment_method === 'bank_transfer' ? '#F9F6F0' : 'transparent',
+                        flex: 1,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="payment_method"
+                        value="bank_transfer"
+                        checked={formData.payment_method === 'bank_transfer'}
+                        onChange={handlePaymentMethodChange}
+                      />{' '}
+                      Bank Transfer
+                    </label>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        border: `2px solid ${formData.payment_method === 'cash' ? GOLD : '#E0E0E0'}`,
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        background: formData.payment_method === 'cash' ? '#F9F6F0' : 'transparent',
+                        flex: 1,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="payment_method"
+                        value="cash"
+                        checked={formData.payment_method === 'cash'}
+                        onChange={handlePaymentMethodChange}
+                      />{' '}
+                      Cash on Arrival
+                    </label>
+                  </div>
+                </div>
+
+                {formData.payment_method === 'bank_transfer' && (
+                  <div>
+                    {paymentMethods ? (
+                      <ScrollReveal delay={400}>
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                            gap: '1rem',
+                            marginBottom: '1.5rem',
+                            alignItems: 'stretch',
+                          }}
+                        >
+                          <div
+                            style={{
+                              border: `1px solid ${GOLD}`,
+                              borderRadius: '1rem',
+                              padding: '1.5rem',
+                              textAlign: 'center',
+                              background: '#FBFBFB',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              height: '100%',
+                            }}
+                          >
+                            <div>
+                              <h4
+                                style={{
+                                  fontSize: '0.9rem',
+                                  fontWeight: 700,
+                                  color: DARK_NAVY,
+                                  marginBottom: '0.25rem',
+                                }}
+                              >
+                                {paymentMethods.cbe_bank_name || 'CBE Transfer'}
+                              </h4>
+                              <p style={{ fontSize: '0.8rem', color: '#555' }}>
+                                <strong>Acct:</strong> {paymentMethods.cbe_account_name || 'N/A'}
+                              </p>
+                              <p style={{ fontSize: '0.8rem', color: '#555', marginBottom: '1rem' }}>
+                                <strong>Number:</strong> {paymentMethods.cbe_account_number || 'N/A'}
+                              </p>
+                            </div>
+                            {cbeQrUrl ? (
+                              <div
+                                style={{
+                                  width: '100%',
+                                  maxWidth: '180px',
+                                  aspectRatio: '1/1',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  overflow: 'hidden',
+                                  borderRadius: '0.5rem',
+                                  background: '#FFFFFF',
+                                  border: '1px solid #E8E8E8',
+                                }}
+                              >
+                                <img
+                                  src={cbeQrUrl}
+                                  alt="CBE QR"
+                                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                />
+                              </div>
+                            ) : (
+                              <div
+                                style={{
+                                  width: '100%',
+                                  maxWidth: '180px',
+                                  aspectRatio: '1/1',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#999',
+                                  fontSize: '0.75rem',
+                                  background: '#F0F0F0',
+                                  borderRadius: '0.5rem',
+                                  border: '1px solid #E8E8E8',
+                                }}
+                              >
+                                No QR
+                              </div>
+                            )}
+                          </div>
+
+                          <div
+                            style={{
+                              border: `1px solid ${GOLD}`,
+                              borderRadius: '1rem',
+                              padding: '1.5rem',
+                              textAlign: 'center',
+                              background: '#FBFBFB',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              height: '100%',
+                            }}
+                          >
+                            <div>
+                              <h4
+                                style={{
+                                  fontSize: '0.9rem',
+                                  fontWeight: 700,
+                                  color: DARK_NAVY,
+                                  marginBottom: '0.25rem',
+                                }}
+                              >
+                                Telebirr
+                              </h4>
+                              <p style={{ fontSize: '0.8rem', color: '#555' }}>
+                                <strong>Name:</strong> {paymentMethods.telebirr_name || 'N/A'}
+                              </p>
+                              <p style={{ fontSize: '0.8rem', color: '#555', marginBottom: '1rem' }}>
+                                <strong>Number:</strong> {paymentMethods.telebirr_number || 'N/A'}
+                              </p>
+                            </div>
+                            {telebirrQrUrl ? (
+                              <div
+                                style={{
+                                  width: '100%',
+                                  maxWidth: '180px',
+                                  aspectRatio: '1/1',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  overflow: 'hidden',
+                                  borderRadius: '0.5rem',
+                                  background: '#FFFFFF',
+                                  border: '1px solid #E8E8E8',
+                                }}
+                              >
+                                <img
+                                  src={telebirrQrUrl}
+                                  alt="Telebirr QR"
+                                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                />
+                              </div>
+                            ) : (
+                              <div
+                                style={{
+                                  width: '100%',
+                                  maxWidth: '180px',
+                                  aspectRatio: '1/1',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#999',
+                                  fontSize: '0.75rem',
+                                  background: '#F0F0F0',
+                                  borderRadius: '0.5rem',
+                                  border: '1px solid #E8E8E8',
+                                }}
+                              >
+                                No QR
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </ScrollReveal>
+                    ) : (
+                      <div style={{ textAlign: 'center', color: '#999', padding: '1rem' }}>
+                        Loading payment details...
+                      </div>
+                    )}
+
+                    <label
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        color: '#777',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        display: 'block',
+                        marginBottom: '0.35rem',
+                      }}
+                    >
+                      Upload Bank Transfer Receipt/Screenshot *
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleFileChange}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px dashed #E0E0E0',
+                        borderRadius: '0.5rem',
+                        outline: 'none',
+                      }}
+                    />
+                    {formData.screenshot && (
+                      <p style={{ fontSize: '0.75rem', color: GOLD, marginTop: '0.25rem' }}>
+                        {formData.screenshot.name} uploaded
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem',
+                    background: DARK_NAVY,
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    marginTop: '0.5rem',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!submitting) {
+                      e.currentTarget.style.background = GOLD;
+                      e.currentTarget.style.color = DARK_NAVY;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!submitting) {
+                      e.currentTarget.style.background = DARK_NAVY;
+                      e.currentTarget.style.color = '#FFFFFF';
+                    }
+                  }}
+                >
+                  {submitting ? 'Processing...' : 'Confirm Booking'}
+                </button>
+              </form>
+            </ScrollReveal>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

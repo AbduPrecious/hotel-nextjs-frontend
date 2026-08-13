@@ -1,4 +1,3 @@
-// app/components/Footer.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -117,11 +116,26 @@ export default function Footer() {
             <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '0.25rem' }}>
               {address}
             </p>
-            <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
-              📞 {phone}
+            <p style={{ 
+              color: 'rgba(255,255,255,0.65)', 
+              fontSize: '0.85rem', 
+              marginBottom: '0.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <i className="fas fa-phone" style={{ color: GOLD, width: '16px', fontSize: '0.85rem' }}></i>
+              {phone}
             </p>
-            <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem' }}>
-              ✉️ {email}
+            <p style={{ 
+              color: 'rgba(255,255,255,0.65)', 
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <i className="fas fa-envelope" style={{ color: GOLD, width: '16px', fontSize: '0.85rem' }}></i>
+              {email}
             </p>
           </div>
 

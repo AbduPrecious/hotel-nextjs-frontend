@@ -91,7 +91,7 @@ export default function RegisterPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
             </svg>
           </div>
-          <h2 style={{fontSize: '1.75rem', fontWeight: 700, color: '#FFFFFF' }}>Join the Club</h2>
+          <h2 style={{fontSize: '1.75rem', fontWeight: 700, color: '#FFFFFF' }}>Join the Member</h2>
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginTop: '0.25rem' }}>Create an account to manage your stays</p>
         </div>
 

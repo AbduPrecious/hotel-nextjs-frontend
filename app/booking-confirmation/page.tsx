@@ -4,8 +4,10 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { GuestIcon, BedIcon } from '../components/Icons';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const GOLD = '#C8A87C';           // ✅ added
 const GOLD_GRADIENT = 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 100%)';
 const DARK_NAVY = '#17232E';
 const BEIGE = '#ECEAE6';
@@ -79,7 +81,7 @@ function ConfirmationContent() {
   const dashboardLink = bookingData.email ? `/dashboard?email=${encodeURIComponent(bookingData.email)}` : '/dashboard';
 
   return (
-    <div style={{ minHeight: '100vh', background: BEIGE, color: '#1A1A1A', paddingTop: '64px' }}>
+    <div style={{ minHeight: '100vh', background: BEIGE, color: '#1A1A1A', paddingTop: isMobile ? '5rem' : '6.5rem' }}>
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
@@ -88,10 +90,6 @@ function ConfirmationContent() {
         @keyframes bounce-slow {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-10px); }
-        }
-        .section-title {
-        
-          font-weight: 700;
         }
         .gold-divider {
           width: 4rem;
@@ -102,7 +100,6 @@ function ConfirmationContent() {
         }
       `}</style>
 
-      {/* ─── Main Content ─── */}
       <section style={{ padding: '2rem 1rem 4rem', maxWidth: '768px', margin: '0 auto' }}>
         <div style={{ 
           background: '#FFFFFF', 
@@ -110,25 +107,15 @@ function ConfirmationContent() {
           boxShadow: '0 10px 40px rgba(0,0,0,0.06)', 
           padding: isMobile ? '1.5rem 1rem' : '2rem 1.5rem' 
         }}>
-
           {/* ─── Checkmark ─── */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ width: '80px', height: '80px', background: 'rgba(200,168,124,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'bounce-slow 2s ease-in-out infinite' }}>
-              <svg style={{ width: '40px', height: '40px', color: '#C8A87C' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
+            <div style={{ width: '80px', height: '80px', background: 'rgba(34,197,94,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'bounce-slow 2s ease-in-out infinite' }}>
+              <i className="fas fa-check-circle" style={{ fontSize: '3rem', color: '#22C55E' }}></i>
             </div>
           </div>
 
-          <h1 style={{ 
-          
-            fontSize: isMobile ? '1.8rem' : '2rem', 
-            fontWeight: 700, 
-            color: DARK_NAVY, 
-            textAlign: 'center', 
-            marginBottom: '0.25rem' 
-          }}>
-            ✅ Booking Submitted!
+          <h1 style={{ fontSize: isMobile ? '1.8rem' : '2rem', fontWeight: 700, color: DARK_NAVY, textAlign: 'center', marginBottom: '0.25rem' }}>
+             Booking Submitted!
           </h1>
           <p style={{ color: '#666666', textAlign: 'center', fontSize: '1rem', marginBottom: '1.5rem' }}>
             Your reservation has been received and is pending confirmation.
@@ -138,44 +125,69 @@ function ConfirmationContent() {
 
           {/* ─── Booking Details ─── */}
           <div style={{ background: '#F8F8F8', borderRadius: '1rem', padding: isMobile ? '1rem' : '1.25rem', marginBottom: '1.5rem' }}>
-            <h2 style={{fontSize: '1.2rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.5rem' }}></span> Booking Details
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '0.75rem' }}>
+              Booking Details
             </h2>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
-              gap: isMobile ? '0.5rem 0' : '0.75rem 1rem' 
-            }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '0.5rem 0' : '0.75rem 1rem' }}>
+              {/* Guest Name */}
               <div>
-                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>Guest Name</p>
-                <p style={{ fontWeight: 500, color: DARK_NAVY }}>{bookingData.name || 'N/A'}</p>
+                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>
+                  Guest Name
+                </p>
+                <p style={{ fontWeight: 500, color: DARK_NAVY, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <GuestIcon size={16} color={DARK_NAVY} /> {bookingData.name || 'N/A'}
+                </p>
               </div>
+
+              {/* Email */}
               <div>
-                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>Email</p>
-                <p style={{ fontWeight: 500, color: DARK_NAVY }}>{bookingData.email || 'N/A'}</p>
+                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>
+                  Email
+                </p>
+                <p style={{ fontWeight: 500, color: DARK_NAVY, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <i className="fas fa-envelope" style={{ color: DARK_NAVY, fontSize: '0.9rem', width: '16px' }}></i>
+                  {bookingData.email || 'N/A'}
+                </p>
               </div>
+
+              {/* Room */}
               <div>
-                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>Room</p>
-                <p style={{ fontWeight: 500, color: DARK_NAVY }}>{bookingData.roomName || 'N/A'}</p>
+                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>
+                  Room
+                </p>
+                <p style={{ fontWeight: 500, color: DARK_NAVY, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <BedIcon size={16} color={DARK_NAVY} /> {bookingData.roomName || 'N/A'}
+                </p>
               </div>
+
               <div>
-                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>Payment Method</p>
+                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>
+                  Payment Method
+                </p>
                 <p style={{ fontWeight: 500, color: DARK_NAVY }}>{paymentMethodLabel}</p>
               </div>
               <div>
-                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>Check-in</p>
+                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>
+                  Check-in
+                </p>
                 <p style={{ fontWeight: 500, color: DARK_NAVY }}>{formatDate(bookingData.checkIn)}</p>
               </div>
               <div>
-                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>Check-out</p>
+                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>
+                  Check-out
+                </p>
                 <p style={{ fontWeight: 500, color: DARK_NAVY }}>{formatDate(bookingData.checkOut)}</p>
               </div>
               <div>
-                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>Nights</p>
+                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>
+                  Nights
+                </p>
                 <p style={{ fontWeight: 500, color: DARK_NAVY }}>{nights} night{nights !== 1 ? 's' : ''}</p>
               </div>
               <div>
-                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>Total Amount</p>
+                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', fontWeight: 600 }}>
+                  Total Amount
+                </p>
                 <p style={{ fontWeight: 700, color: '#C8A87C', fontSize: '1.1rem' }}>ETB {bookingData.totalPrice || '0'}</p>
               </div>
             </div>
@@ -183,8 +195,8 @@ function ConfirmationContent() {
 
           {/* ─── Payment Status ─── */}
           <div style={{ background: 'rgba(200,168,124,0.08)', border: '1px solid rgba(200,168,124,0.2)', borderRadius: '1rem', padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <div style={{ fontSize: '1.5rem' }}>⏳</div>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <i className="fas fa-credit-card" style={{ fontSize: '1.5rem', color: GOLD }}></i>
               <div>
                 <h3 style={{ fontWeight: 600, color: DARK_NAVY, fontSize: '0.9rem' }}>Payment Pending Verification</h3>
                 <p style={{ color: '#666666', fontSize: '0.8rem', marginTop: '0.25rem' }}>
@@ -199,7 +211,8 @@ function ConfirmationContent() {
           {/* ─── Next Steps ─── */}
           <div style={{ background: '#F8F8F8', borderRadius: '1rem', padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
             <h3 style={{ fontWeight: 600, color: DARK_NAVY, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '1.2rem' }}></span> Next Steps
+              <i className="fas fa-list-ul" style={{ fontSize: '1.2rem', color: GOLD }}></i>
+              Next Steps
             </h3>
             <ul style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '0.35rem' : '0.5rem', paddingLeft: '0', margin: 0 }}>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', fontSize: '0.8rem', color: '#555' }}>
@@ -225,17 +238,26 @@ function ConfirmationContent() {
               href="/"
               style={{
                 textAlign: 'center',
-                background: GOLD_GRADIENT,
-                color: DARK_NAVY,
+                background: DARK_NAVY,
+                color: '#FFFFFF',
                 fontWeight: 600,
                 padding: '0.8rem 1.5rem',
                 borderRadius: '9999px',
                 textDecoration: 'none',
                 transition: 'all 0.3s ease',
                 fontSize: '0.9rem',
+                border: 'none',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(200,168,124,0.3)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = GOLD;
+                e.currentTarget.style.color = DARK_NAVY;
+                e.currentTarget.style.transform = 'scale(1.02)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = DARK_NAVY;
+                e.currentTarget.style.color = '#FFFFFF';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
             >
               Return Home
             </Link>
@@ -253,13 +275,20 @@ function ConfirmationContent() {
                 fontSize: '0.9rem',
                 background: 'transparent',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#C8A87C'; e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.transform = 'scale(1.02)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = DARK_NAVY; e.currentTarget.style.transform = 'scale(1)'; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#C8A87C';
+                e.currentTarget.style.color = '#FFFFFF';
+                e.currentTarget.style.transform = 'scale(1.02)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = DARK_NAVY;
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
             >
-               View Dashboard
+              View Dashboard
             </Link>
           </div>
-
         </div>
       </section>
     </div>

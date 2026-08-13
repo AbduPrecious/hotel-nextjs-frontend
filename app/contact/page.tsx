@@ -1,4 +1,3 @@
-// app/contact/page.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -6,7 +5,7 @@ import Link from 'next/link';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const GOLD = '#C8A87C';
-const DARK_NAVY = '#17232E';
+const DARK_NAVY = '#15232E'; // 🟢 Updated to your requested color
 const BEIGE = '#ECEAE6';
 
 // ─── Scroll Reveal Component ──────────────────────────────
@@ -110,7 +109,7 @@ export default function ContactPage() {
 
       if (response.ok) {
         setStatus('success');
-        setMessage('✅ Message sent successfully! We\'ll get back to you soon.');
+        setMessage(' Message sent successfully! We\'ll get back to you soon.');
         setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
         setTimeout(() => {
           setStatus('idle');
@@ -147,7 +146,7 @@ export default function ContactPage() {
   const mapEmbed = contactData?.Map_Embed || contactData?.googleMapsEmbed;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FFFFFF', color: '#1A1A1A', paddingTop: isMobile ? '8rem' : '9rem', boxSizing: 'border-box' }}>
+    <div style={{ minHeight: '100vh', color: '#1A1A1A', paddingTop: isMobile ? '5rem' : '6.5rem', boxSizing: 'border-box' }}>
       <style>{`
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -333,7 +332,7 @@ export default function ContactPage() {
       `}</style>
 
       {/* ─── 1. ANIMATED HERO ─────────────────────────────────── */}
-      <div className="contact-hero animate-in">
+     <div className="contact-hero animate-in" style={{ padding: isMobile ? '4rem 1rem' : '5rem 1rem' }}>
         <div className="breadcrumb">
           <Link href="/">Home</Link>
           <span>/</span>

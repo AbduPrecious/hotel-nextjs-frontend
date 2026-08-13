@@ -1,14 +1,14 @@
-// app/components/ScrollReveal.tsx
 'use client';
 
-import { useEffect, useRef, ReactNode } from 'react';
+import { useEffect, useRef } from 'react';
 
-interface Props {
-  children: ReactNode;
-  delay?: number; // delay in milliseconds
-}
-
-export default function ScrollReveal({ children, delay = 0 }: Props) {
+export default function ScrollReveal({
+  children,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,21 +18,23 @@ export default function ScrollReveal({ children, delay = 0 }: Props) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          el.classList.add('opacity-100', 'translate-y-0');
-          el.classList.remove('opacity-0', 'translate-y-10');
+          // ✅ Element enters viewport → fade in
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
         } else {
-          // Optional: hides again when out of view (you can keep or remove this)
-          el.classList.remove('opacity-100', 'translate-y-0');
-          el.classList.add('opacity-0', 'translate-y-10');
+          // ✅ Element leaves viewport → fade out (so it will re‑animate next time)
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(30px)';
         }
       },
       { threshold: 0.1 }
     );
 
-    // Initial state with transition
-    el.classList.add('opacity-0', 'translate-y-10', 'transition-all', 'duration-700', 'ease-out');
-    // Apply delay via inline style (Tailwind can't handle dynamic delays easily)
-    el.style.transitionDelay = `${delay}ms`;
+    // Initial hidden state
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(30px)';
+    el.style.transition =
+      `opacity 0.4s ease ${delay}ms, transform 0.4s ease ${delay}ms`;
 
     observer.observe(el);
     return () => observer.disconnect();

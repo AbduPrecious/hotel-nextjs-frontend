@@ -117,7 +117,7 @@ export default function Navbar() {
             <svg width={isMobile ? "14" : "16"} height={isMobile ? "14" : "16"} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.038-1.158.394l-2.718 3.772a15.75 15.75 0 01-6.286-6.286l3.772-2.718c.356-.256.505-.718.394-1.158l-1.106-4.423A1.25 1.25 0 007.372 3.75H6.75A2.25 2.25 0 004.5 6.75z" />
             </svg>
-            <span>{hotel?.phone || '+33 156 78 89 56'}</span>
+            <span>{hotel?.phone || '+251 911 121 3145'}</span>
           </div>
           
           {!isMobile && <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.1)' }} />}
@@ -127,7 +127,7 @@ export default function Navbar() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
             </svg>
-            <span>{hotel?.address || 'Newark Valley, New York(NY), 13811'}</span>
+            <span>{hotel?.address || 'Shashamane, Shashamane, 1000'}</span>
           </div>
         </div>
 

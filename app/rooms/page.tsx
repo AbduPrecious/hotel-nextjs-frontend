@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { getAvailableRooms } from '../lib/api';
 import ScrollReveal from '../components/ScrollReveal';
+import { BedIcon, GuestIcon } from '../components/Icons';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
-// Helper to determine room category
 function getRoomType(title: string): string {
   const lower = title.toLowerCase();
   if (lower.includes('suite')) return 'suite';
@@ -24,7 +24,6 @@ function RoomsContent() {
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ─── Constants & Responsive Hook ─────────────────────────────
   const DARK_NAVY = '#17232E';
   const GOLD = '#C8A87C';
   const [isMobile, setIsMobile] = useState(false);
@@ -101,7 +100,7 @@ function RoomsContent() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF' }}>
+      <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '48px', height: '48px', border: '4px solid #C8A87C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
         <p style={{ marginTop: '16px', color: '#666666', letterSpacing: '0.05em', fontSize: '12px', textTransform: 'uppercase' }}>Loading accommodations...</p>
       </div>
@@ -109,7 +108,7 @@ function RoomsContent() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FFFFFF', color: '#1A1A1A', paddingTop: isMobile ? '8rem' : '9rem', boxSizing: 'border-box' }}>
+    <div style={{ minHeight: '100vh', color: '#1A1A1A', paddingTop: isMobile ? '5rem' : '6.5rem', boxSizing: 'border-box' }}>
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
@@ -131,7 +130,6 @@ function RoomsContent() {
           margin-bottom: 0.5rem;
         }
         .section-title {
-         
           font-size: 2.5rem;
           font-weight: 700;
           color: #1A1A1A;
@@ -162,7 +160,6 @@ function RoomsContent() {
           padding: 0.3rem 0.9rem;
           border-radius: 9999px;
           border: 1px solid rgba(200,168,124,0.3);
-        
           letter-spacing: 0.05em;
         }
         .room-card {
@@ -202,7 +199,6 @@ function RoomsContent() {
           flex: 1;
         }
         .room-card .content .room-title {
-         
           font-size: 1.5rem;
           font-weight: 500;
           color: #1A1A1A;
@@ -245,7 +241,7 @@ function RoomsContent() {
         .room-card .content .view-btn {
           display: inline-block;
           text-align: center;
-          background: #1A1A1A;
+          background: #15232e;
           color: #FFFFFF;
           padding: 0.9rem 1.5rem;
           border: none;
@@ -296,6 +292,7 @@ function RoomsContent() {
           text-transform: uppercase;
           box-shadow: 0 4px 15px rgba(200,168,124,0.3);
         }
+        /* ─── Responsive: Tablet/Desktop ─── */
         @media (min-width: 768px) {
           .room-card {
             flex-direction: row;
@@ -311,6 +308,7 @@ function RoomsContent() {
             width: 50%;
           }
         }
+        /* ─── Mobile adjustments ─── */
         @media (max-width: 768px) {
           .room-card .content {
             padding: 1.25rem 1.25rem 1.5rem;
@@ -328,38 +326,99 @@ function RoomsContent() {
           .room-card .image-wrapper img {
             min-height: 220px;
           }
+          /* Filter bar: stack vertically */
+          .filter-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .hero-title {
+            font-size: 2.5rem !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .room-card .image-wrapper {
+            min-height: 180px;
+          }
+          .room-card .image-wrapper img {
+            min-height: 180px;
+          }
+          .price-badge {
+            font-size: 0.6rem;
+            padding: 0.2rem 0.6rem;
+          }
+          .room-number-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+          }
+        }
+
+        /* ─── Contact-style hero (copied from Contact page) ─── */
+        .contact-hero {
+          background: ${DARK_NAVY};
+          padding: 3rem 1rem;
+          text-align: center;
+          border-bottom: 3px solid ${GOLD};
+        }
+        .contact-hero .breadcrumb {
+          font-size: 0.7rem;
+          color: ${GOLD};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-bottom: 0.5rem;
+        }
+        .contact-hero .breadcrumb a {
+          color: ${GOLD};
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+        .contact-hero .breadcrumb a:hover { color: white; }
+        .contact-hero h1 {
+          font-size: 2.5rem;
+          font-weight: 700;
+          color: white;
+          margin-bottom: 0.25rem;
+          letter-spacing: 0.02em;
+        }
+        .contact-hero p {
+          font-size: 0.9rem;
+          color: rgba(255,255,255,0.7);
+          max-width: 672px;
+          margin: 0 auto;
+          font-weight: 300;
+          line-height: 1.6;
+        }
+        @media (max-width: 768px) {
+          .contact-hero h1 { font-size: 2rem; }
         }
       `}</style>
 
-      {/* ─── 1. ANIMATED HERO (Exact match to Gallery/About) ──── */}
-      <div className="animate-in" style={{ background: DARK_NAVY, padding: isMobile ? '3rem 1rem' : '4rem 1rem', borderBottom: `3px solid ${GOLD}`, textAlign: 'center' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <div style={{ fontSize: '0.7rem', color: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', fontWeight: 600 }}>
-            <Link href="/" style={{ color: GOLD, textDecoration: 'none', transition: 'color 0.3s ease' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFFFFF'; }} onMouseLeave={(e) => { e.currentTarget.style.color = GOLD; }}>Home</Link>
-            <span style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
-            <span style={{ color: '#FFFFFF' }}>Rooms</span>
-          </div>
-          <h1 style={{fontSize: isMobile ? '2.5rem' : '3.5rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.25rem', letterSpacing: '0.02em' }}>
-            Accommodations
-          </h1>
-          <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)', maxWidth: '672px', margin: '0 auto', fontWeight: 300, lineHeight: '1.6' }}>
-            Refurbished with sophisticated elegance, designed to deliver a memorable stay.
-          </p>
-
-          {checkIn && checkOut && (
-            <div style={{ marginTop: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#2A2A2A', border: '1px solid rgba(200,168,124,0.3)', padding: '0.5rem 1rem', fontSize: '11px', letterSpacing: '0.05em', color: GOLD }}>
-              <span>CHECK-IN: <strong style={{ color: '#FFFFFF' }}>{checkIn}</strong></span>
-              <span>•</span>
-              <span>CHECK-OUT: <strong style={{ color: '#FFFFFF' }}>{checkOut}</strong></span>
-            </div>
-          )}
+      {/* ─── 1. HERO (Contact page style) ─── */}
+      <div className="contact-hero animate-in" style={{ padding: isMobile ? '4rem 1rem' : '5rem 1rem' }}>
+        <div className="breadcrumb">
+          <Link href="/">Home</Link>
+          <span>/</span>
+          <span style={{ color: '#FFFFFF' }}>Rooms</span>
         </div>
+        <h1 className="hero-title">Accommodations</h1>
+        <p>Refurbished with sophisticated elegance, designed to deliver a memorable stay.</p>
+
+        {checkIn && checkOut && (
+          <div style={{ marginTop: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', background: '#2A2A2A', border: '1px solid rgba(200,168,124,0.3)', padding: '0.5rem 1rem', fontSize: '11px', letterSpacing: '0.05em', color: GOLD }}>
+            <span>CHECK-IN: <strong style={{ color: '#FFFFFF' }}>{checkIn}</strong></span>
+            <span>•</span>
+            <span>CHECK-OUT: <strong style={{ color: '#FFFFFF' }}>{checkOut}</strong></span>
+          </div>
+        )}
       </div>
 
       {/* ─── 2. Filter Bar ─── */}
       <div style={{ maxWidth: '1152px', margin: '0 auto', padding: '0 1rem', marginTop: '-1.5rem', position: 'relative', zIndex: 10 }}>
         <div style={{ background: '#FFFFFF', boxShadow: '0 10px 40px rgba(0,0,0,0.08)', padding: '1.5rem', borderBottom: '2px solid #C8A87C' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem', alignItems: 'end' }}>
+          <div className="filter-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem', alignItems: 'end' }}>
             <div>
               <label style={{ fontSize: '10px', letterSpacing: '0.15em', fontWeight: 700, color: '#777777', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>ROOM TYPE</label>
               <select
@@ -413,9 +472,21 @@ function RoomsContent() {
             <div>
               <button
                 onClick={resetFilters}
-                style={{ width: '100%', background: '#1A1A1A', color: '#FFFFFF', padding: '0.75rem 0', border: 'none', fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer', transition: 'background 0.3s ease' }}
+                style={{ 
+                  width: '100%', 
+                  background: '#15232e',
+                  color: '#FFFFFF', 
+                  padding: '0.75rem 0', 
+                  border: 'none', 
+                  fontSize: '11px', 
+                  fontWeight: 600, 
+                  letterSpacing: '0.15em', 
+                  textTransform: 'uppercase', 
+                  cursor: 'pointer', 
+                  transition: 'background 0.3s ease' 
+                }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = '#C8A87C'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = '#1A1A1A'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#15232e'; }}
               >
                 Clear Filters
               </button>
@@ -437,7 +508,6 @@ function RoomsContent() {
               return (
                 <ScrollReveal key={room.documentId || room.id || idx} delay={idx * 80}>
                   <div className="room-card">
-                    {/* ─── Image ─── */}
                     <div className="image-wrapper">
                       {imageUrl ? (
                         <img
@@ -453,7 +523,6 @@ function RoomsContent() {
                       <div className="room-number-badge">{roomNumber}</div>
                     </div>
 
-                    {/* ─── Content ─── */}
                     <div className="content">
                       <h3 className="room-title">
                         <Link href={`/rooms/${room.documentId || room.id}`}>
@@ -466,26 +535,15 @@ function RoomsContent() {
                       </p>
 
                       <div className="room-details">
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="18" height="18">
-                            <path d="M 230 780 L 230 600 L 230 350 Q 230 310 270 310 L 730 310 Q 770 310 770 350 L 770 780" fill="none" stroke="#000000" strokeWidth="35" strokeLinecap="round" strokeLinejoin="round" />
-                            <rect x="230" y="780" width="40" height="60" rx="10" fill="none" stroke="#000000" strokeWidth="35" />
-                            <rect x="730" y="780" width="40" height="60" rx="10" fill="none" stroke="#000000" strokeWidth="35" />
-                            <rect x="310" y="380" width="130" height="80" rx="15" fill="none" stroke="#000000" strokeWidth="35" />
-                            <rect x="560" y="380" width="130" height="80" rx="15" fill="none" stroke="#000000" strokeWidth="35" />
-                            <line x1="230" y1="580" x2="770" y2="580" stroke="#000000" strokeWidth="35" strokeLinecap="round" />
-                            <line x1="230" y1="680" x2="770" y2="680" stroke="#000000" strokeWidth="35" strokeLinecap="round" />
-                          </svg>
-                          {roomData?.bed_type || 'King Bed'}
-                        </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="18" height="18">
-                            <circle cx="500" cy="500" r="410" fill="none" stroke="#263238" strokeWidth="32" />
-                            <circle cx="500" cy="370" r="120" fill="none" stroke="#263238" strokeWidth="32" />
-                            <path d="M 320 680 A 180 180 0 0 1 680 680" fill="none" stroke="#263238" strokeWidth="32" strokeLinecap="round" />
-                          </svg>
-                          {roomData?.capacity || 2} Guests
-                        </span>
+                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+  <BedIcon size={18} color="#555" />
+  {roomData?.bed_type || 'King Bed'}
+</span>
+<span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+  <GuestIcon size={18} color="#555" />
+  {roomData?.capacity || 2} Guests
+</span>
+                        
                       </div>
                       <Link
                         href={`/rooms/${room.documentId || room.id}${checkIn && checkOut ? `?checkIn=${checkIn}&checkOut=${checkOut}` : ''}`}
@@ -505,9 +563,20 @@ function RoomsContent() {
             <p style={{ fontSize: '0.8rem', color: '#777777', marginBottom: '1.5rem' }}>Try relaxing your filter parameters to see more options.</p>
             <button
               onClick={resetFilters}
-              style={{ background: '#1A1A1A', color: '#FFFFFF', padding: '0.75rem 1.5rem', border: 'none', fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer', transition: 'background 0.3s ease' }}
+              style={{ 
+                background: '#15232e',
+                color: '#FFFFFF', 
+                padding: '0.75rem 1.5rem', 
+                border: 'none', 
+                fontSize: '11px', 
+                fontWeight: 600, 
+                letterSpacing: '0.15em', 
+                textTransform: 'uppercase', 
+                cursor: 'pointer', 
+                transition: 'background 0.3s ease' 
+              }}
               onMouseEnter={(e) => { e.currentTarget.style.background = '#C8A87C'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = '#1A1A1A'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#15232e'; }}
             >
               Reset Filters
             </button>
@@ -521,7 +590,7 @@ function RoomsContent() {
 export default function RoomsPage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF' }}>
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '48px', height: '48px', border: '4px solid #C8A87C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
       </div>
     }>

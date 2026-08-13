@@ -26,6 +26,21 @@ export default function MenuSection({ items }: MenuSectionProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // ─── Animation / Transition States ─────────────────────────
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | 'fade'>('right');
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // ─── Responsive Hook ──────────────────────────────────────────
+  const [screenWidth, setScreenWidth] = useState(0);
+  useEffect(() => {
+    const handleResize = () => setScreenWidth(window.innerWidth);
+    setScreenWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  const isMobile = screenWidth < 768;
+  const isTablet = screenWidth >= 768 && screenWidth < 1024;
+
   if (!items || items.length === 0) return null;
 
   const categories = ['All', ...new Set(items.map((item) => item.category))];
@@ -34,57 +49,62 @@ export default function MenuSection({ items }: MenuSectionProps) {
     return items.filter((item) => item.category === selectedCategory);
   }, [items, selectedCategory]);
 
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [selectedCategory]);
-
-  const getItemsPerPage = () => {
-    if (typeof window === 'undefined') return 8;
-    if (window.innerWidth < 480) return 2;
-    if (window.innerWidth < 640) return 3;
-    if (window.innerWidth < 1024) return 4;
-    return 8;
+  const handleCategoryChange = (cat: string) => {
+    if (cat === selectedCategory || isAnimating) return;
+    setSlideDirection('fade');
+    setIsAnimating(true);
+    setTimeout(() => {
+      setSelectedCategory(cat);
+      setCurrentPage(0);
+      setIsAnimating(false);
+    }, 200);
   };
 
-  const [itemsPerPage, setItemsPerPage] = useState(8);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setItemsPerPage(getItemsPerPage());
-    };
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const startIndex = currentPage * itemsPerPage;
-  const visibleItems = filteredItems.slice(startIndex, startIndex + itemsPerPage);
+  // ─── EXACT ROW CALCULATIONS ──────────────────────────────────
+  const GAP = isMobile ? 16 : 24;
+  // Exactly 3 items per row on Desktop, 2 on Tablet, 1 on Mobile
+  const itemsPerRow = isMobile ? 1 : isTablet ? 2 : 3; 
+  const totalPages = Math.ceil(filteredItems.length / itemsPerRow);
+  const startIndex = currentPage * itemsPerRow;
+  const visibleItems = filteredItems.slice(startIndex, startIndex + itemsPerRow);
   const isFirstPage = currentPage === 0;
   const isLastPage = currentPage >= totalPages - 1;
+  // If the row has fewer items than max capacity (e.g., 1 or 2 items), do not stretch them
+  const isFullRow = visibleItems.length === itemsPerRow;
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-    if (containerRef.current) {
-      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+  const handlePageChange = (newPage: number, direction: 'left' | 'right') => {
+    if (isAnimating) return;
+    setSlideDirection(direction);
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentPage(newPage);
+      setIsAnimating(false);
+    }, 200);
   };
 
   const goToPrevious = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!isFirstPage) {
-      handlePageChange(currentPage - 1);
+    if (!isFirstPage && !isAnimating) {
+      handlePageChange(currentPage - 1, 'left');
     }
   };
 
   const goToNext = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!isLastPage) {
-      handlePageChange(currentPage + 1);
+    if (!isLastPage && !isAnimating) {
+      handlePageChange(currentPage + 1, 'right');
     }
   };
 
-  const needsPagination = filteredItems.length > itemsPerPage;
+  const needsPagination = filteredItems.length > itemsPerRow;
+
+  // Compute slide transform offset based on current animation state
+  const getTransform = () => {
+    if (!isAnimating) return 'translateX(0px)';
+    if (slideDirection === 'right') return 'translateX(-30px)';
+    if (slideDirection === 'left') return 'translateX(30px)';
+    return 'translateY(10px)';
+  };
 
   return (
     <section
@@ -93,7 +113,6 @@ export default function MenuSection({ items }: MenuSectionProps) {
         background: '#FFFFFF',
         borderTop: '1px solid #E8E8E8',
         borderBottom: '1px solid #E8E8E8',
-        
       }}
       id="menu"
       ref={containerRef}
@@ -116,7 +135,6 @@ export default function MenuSection({ items }: MenuSectionProps) {
           </span>
           <h2
             style={{
-            
               fontSize: '2.5rem',
               fontWeight: 700,
               color: '#1A1A1A',
@@ -161,29 +179,32 @@ export default function MenuSection({ items }: MenuSectionProps) {
             <button
               key={cat}
               type="button"
-              onClick={() => setSelectedCategory(cat)}
+              onClick={() => handleCategoryChange(cat)}
               style={{
                 padding: '0.5rem 1.25rem',
                 borderRadius: '9999px',
                 fontSize: '0.75rem',
                 fontWeight: 500,
-                border: 'none',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 background: selectedCategory === cat ? '#C8A87C' : '#F0F0F0',
                 color: selectedCategory === cat ? '#1A1A1A' : '#666666',
-                border: selectedCategory === cat ? 'none' : '1px solid #E0E0E0',
+                border: selectedCategory === cat ? '1px solid #C8A87C' : '1px solid #E0E0E0',
+                transform: selectedCategory === cat ? 'scale(1.05)' : 'scale(1)',
+                boxShadow: selectedCategory === cat ? '0 4px 12px rgba(200, 168, 124, 0.3)' : 'none',
               }}
               onMouseEnter={(e) => {
                 if (selectedCategory !== cat) {
                   e.currentTarget.style.borderColor = '#C8A87C';
                   e.currentTarget.style.color = '#C8A87C';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (selectedCategory !== cat) {
                   e.currentTarget.style.borderColor = '#E0E0E0';
                   e.currentTarget.style.color = '#666666';
+                  e.currentTarget.style.transform = 'none';
                 }
               }}
             >
@@ -192,20 +213,27 @@ export default function MenuSection({ items }: MenuSectionProps) {
           ))}
         </div>
 
-        {/* ─── Menu Grid ─── */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1.5rem',
-          }}
-        >
+        {/* ─── PERFECTLY CENTERED & EQUAL HEIGHT ROW WITH SLIDE TRANSITION ─── */}
+        <div style={{
+          display: isFullRow ? 'grid' : 'flex',
+          gridTemplateColumns: isFullRow ? `repeat(${itemsPerRow}, 1fr)` : 'none',
+          justifyContent: isFullRow ? 'normal' : 'center',
+          alignItems: isFullRow ? 'normal' : 'stretch',
+          gap: `${GAP}px`,
+          padding: '0.25rem 0',
+          width: '100%',
+          opacity: isAnimating ? 0 : 1,
+          transform: getTransform(),
+          transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}>
           {visibleItems.map((item) => {
             const imageUrl = item.image?.url ? `${STRAPI_URL}${item.image.url}` : null;
             return (
               <div
                 key={item.documentId}
                 style={{
+                  width: isFullRow ? '100%' : (isMobile ? '100%' : '380px'),
+                  maxWidth: isFullRow ? '100%' : (isMobile ? '100%' : '380px'),
                   background: '#F8F8F8',
                   border: '1px solid #E8E8E8',
                   borderRadius: '1rem',
@@ -281,7 +309,6 @@ export default function MenuSection({ items }: MenuSectionProps) {
                   >
                     <h3
                       style={{
-                       
                         fontSize: '1.125rem',
                         fontWeight: 'bold',
                         color: '#1A1A1A',
@@ -298,7 +325,6 @@ export default function MenuSection({ items }: MenuSectionProps) {
                     </h3>
                     <span
                       style={{
-                       
                         fontSize: '1.125rem',
                         fontWeight: 'bold',
                         color: '#C8A87C',
@@ -338,7 +364,7 @@ export default function MenuSection({ items }: MenuSectionProps) {
           })}
         </div>
 
-        {/* ─── Pagination ─── */}
+        {/* ─── Pagination (Fixed No-Scroll) ─── */}
         {needsPagination && totalPages > 1 && (
           <div
             style={{
@@ -352,14 +378,14 @@ export default function MenuSection({ items }: MenuSectionProps) {
             <button
               type="button"
               onClick={goToPrevious}
-              disabled={isFirstPage}
+              disabled={isFirstPage || isAnimating}
               style={{
                 padding: '0.5rem 0.75rem',
                 borderRadius: '9999px',
                 transition: 'all 0.3s ease',
                 background: isFirstPage ? '#E8E8E8' : '#C8A87C',
                 color: isFirstPage ? '#999999' : '#1A1A1A',
-                cursor: isFirstPage ? 'not-allowed' : 'pointer',
+                cursor: isFirstPage || isAnimating ? 'not-allowed' : 'pointer',
                 border: 'none',
               }}
             >
@@ -373,7 +399,12 @@ export default function MenuSection({ items }: MenuSectionProps) {
                 <button
                   key={idx}
                   type="button"
-                  onClick={() => handlePageChange(idx)}
+                  onClick={() => {
+                    if (idx !== currentPage) {
+                      handlePageChange(idx, idx > currentPage ? 'right' : 'left');
+                    }
+                  }}
+                  disabled={isAnimating}
                   style={{
                     height: '0.375rem',
                     borderRadius: '9999px',
@@ -381,7 +412,7 @@ export default function MenuSection({ items }: MenuSectionProps) {
                     background: idx === currentPage ? '#C8A87C' : '#E0E0E0',
                     width: idx === currentPage ? '1.5rem' : '0.375rem',
                     border: 'none',
-                    cursor: 'pointer',
+                    cursor: isAnimating ? 'not-allowed' : 'pointer',
                   }}
                 />
               ))}
@@ -390,14 +421,14 @@ export default function MenuSection({ items }: MenuSectionProps) {
             <button
               type="button"
               onClick={goToNext}
-              disabled={isLastPage}
+              disabled={isLastPage || isAnimating}
               style={{
                 padding: '0.5rem 0.75rem',
                 borderRadius: '9999px',
                 transition: 'all 0.3s ease',
                 background: isLastPage ? '#E8E8E8' : '#C8A87C',
                 color: isLastPage ? '#999999' : '#1A1A1A',
-                cursor: isLastPage ? 'not-allowed' : 'pointer',
+                cursor: isLastPage || isAnimating ? 'not-allowed' : 'pointer',
                 border: 'none',
               }}
             >
@@ -417,7 +448,7 @@ export default function MenuSection({ items }: MenuSectionProps) {
               color: '#999999',
             }}
           >
-            Showing {startIndex + 1}–{Math.min(startIndex + itemsPerPage, filteredItems.length)} of{' '}
+            Showing {startIndex + 1}–{Math.min(startIndex + itemsPerRow, filteredItems.length)} of{' '}
             {filteredItems.length} items
           </div>
         )}

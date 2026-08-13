@@ -1,4 +1,3 @@
-// app/about/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,10 +7,9 @@ import AnimatedCounter from '../components/AnimatedCounter';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const GOLD = '#C8A87C';
-const DARK_NAVY = '#17232E';
+const DARK_NAVY = '#15232E';
 const BEIGE = '#ECEAE6';
 
-// ─── Bulletproof Strapi v4/v5 Media Helper ──────────────────
 function getMediaUrl(media: any) {
   if (!media) return null;
   if (typeof media === 'string') return media;
@@ -23,7 +21,6 @@ function getMediaUrl(media: any) {
   return null;
 }
 
-// ─── Prefix Helper ──────────────────────────────────────────
 function buildImageUrl(relativeOrAbsolute: string | null) {
   if (!relativeOrAbsolute) return null;
   if (relativeOrAbsolute.startsWith('http')) return relativeOrAbsolute;
@@ -46,7 +43,6 @@ export default function AboutPage() {
   }, []);
   const isMobile = screenWidth < 768;
 
-  // ─── Fetch Data Mapped to your exact Strapi Schema ────────
   useEffect(() => {
     async function fetchData() {
       try {
@@ -68,7 +64,7 @@ export default function AboutPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BEIGE }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: '48px', height: '48px', border: '4px solid #C8A87C', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto', animation: 'spin 1s linear infinite' }}></div>
           <p style={{ marginTop: '16px', color: '#666666' }}>Loading About Page...</p>
@@ -80,29 +76,68 @@ export default function AboutPage() {
   const visionImgUrl = buildImageUrl(getMediaUrl(about?.Section_Image));
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FFFFFF', color: '#1A1A1A', paddingTop: isMobile ? '8rem' : '9rem', boxSizing: 'border-box'}}>
+    <div style={{ minHeight: '100vh', color: '#1A1A1A', paddingTop: isMobile ? '5rem' : '6.5rem', boxSizing: 'border-box' }}>
       <style>{`
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-in { animation: fadeInUp 0.8s ease forwards; opacity: 0; }
+
+        /* ─── Contact-style hero (copied from Contact page) ─── */
+        .contact-hero {
+          background: ${DARK_NAVY};
+          padding: 3rem 1rem;
+          text-align: center;
+          border-bottom: 3px solid ${GOLD};
+        }
+        .contact-hero .breadcrumb {
+          font-size: 0.7rem;
+          color: ${GOLD};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-bottom: 0.5rem;
+        }
+        .contact-hero .breadcrumb a {
+          color: ${GOLD};
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+        .contact-hero .breadcrumb a:hover { color: white; }
+        .contact-hero h1 {
+          font-size: 2.5rem;
+          font-weight: 700;
+          color: white;
+          margin-bottom: 0.25rem;
+          letter-spacing: 0.02em;
+        }
+        .contact-hero p {
+          font-size: 0.9rem;
+          color: rgba(255,255,255,0.7);
+          max-width: 672px;
+          margin: 0 auto;
+          font-weight: 300;
+          line-height: 1.6;
+        }
+        @media (max-width: 768px) {
+          .contact-hero h1 { font-size: 2rem; }
+        }
       `}</style>
 
-      {/* ─── 1. HERO SECTION (Exactly like Gallery Hero) ──────── */}
-      <div style={{ background: DARK_NAVY, padding: isMobile ? '3rem 1rem' : '4rem 1rem', borderBottom: `3px solid ${GOLD}`, textAlign: 'center' }}>
-        <div style={{ fontSize: '0.7rem', color: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', fontWeight: 600 }}>
-          <Link href="/" style={{ color: GOLD, textDecoration: 'none', transition: 'color 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFFFFF'} onMouseLeave={(e) => e.currentTarget.style.color = GOLD}>Home</Link>
-          <span style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
+      {/* ─── 1. HERO SECTION (Contact page style) ─── */}
+      <div className="contact-hero animate-in" style={{ padding: isMobile ? '4rem 1rem' : '5rem 1rem' }}>
+        <div className="breadcrumb">
+          <Link href="/">Home</Link>
+          <span>/</span>
           <span style={{ color: '#FFFFFF' }}>About Us</span>
         </div>
-        <h1 className="animate-in" style={{fontSize: isMobile ? '2.5rem' : '3.5rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.25rem', letterSpacing: '0.02em' }}>
-          {about?.Hero_Title || 'About Us'}
-        </h1>
-        <p className="animate-in" style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)', maxWidth: '672px', margin: '0 auto', fontWeight: 300, lineHeight: '1.6' }}>
-          {about?.Hero_Subtitle || 'Discover the story behind our hospitality'}
-        </p>
+        <h1>{about?.Hero_Title || 'About Us'}</h1>
+        <p>{about?.Hero_Subtitle || 'Discover the story behind our hospitality'}</p>
       </div>
 
-      {/* ─── 2. OUR STORY & MISSION SECTION ──────────────────── */}
+      {/* ─── 2. OUR STORY & MISSION ─── */}
       <section style={{ padding: isMobile ? '3rem 1rem' : '4.5rem 1rem', background: BEIGE, borderBottom: '1px solid #E8E8E8' }}>
         <div style={{ maxWidth: '1152px', margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '2.5rem' : '4rem' }}>
@@ -141,7 +176,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-       {/* ===== STATS (Animated) ===== */}
+      {/* ===== STATS ===== */}
       <section style={{ padding: isMobile ? '2.5rem 1rem' : '4rem 1rem', background: '#FFFFFF', borderTop: '1px solid #E8E8E8', borderBottom: '1px solid #E8E8E8' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '1.5rem' : '2rem' }}>
@@ -153,7 +188,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ─── 4. OUR VISION SECTION (Image + Text) ────────────── */}
+      {/* ─── 4. OUR VISION ─── */}
       <section style={{ padding: isMobile ? '3rem 1rem' : '4.5rem 1rem', background: BEIGE }}>
         <div style={{ maxWidth: '1152px', margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '2rem' : '3.5rem', alignItems: 'center' }}>
@@ -182,7 +217,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ─── 5. BOLD CTA SECTION ─────────────────────────────────── */}
+      {/* ─── 5. BOLD CTA ─── */}
       <section style={{ padding: isMobile ? '3rem 1rem' : '4.5rem 1rem', background: DARK_NAVY, textAlign: 'center', borderTop: `3px solid ${GOLD}` }}>
         <div className="animate-in" style={{ maxWidth: '672px', margin: '0 auto' }}>
           <h2 style={{fontSize: isMobile ? '2rem' : '2.8rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.5rem' }}>
@@ -195,11 +230,6 @@ export default function AboutPage() {
             Book Now
           </Link>
         </div>
-      </section>
-
-{/* ===== STATS (Animated) ===== */}
-      <section style={{ padding: isMobile ? '2.5rem 1rem' : '4rem 1rem', background: '#FFFFFF', borderTop: '1px solid #E8E8E8', borderBottom: '1px solid #E8E8E8' }}>
-        
       </section>
     </div>
   );
