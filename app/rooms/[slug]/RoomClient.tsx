@@ -330,7 +330,7 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
                       width: isMobile ? '50px' : '70px', height: isMobile ? '35px' : '50px', flexShrink: 0, borderRadius: '0.4rem', overflow: 'hidden', cursor: 'pointer',
                       border: idx === currentPhotoIndex ? `2px solid ${GOLD}` : '2px solid transparent',
                       transition: 'all 0.3s ease', opacity: idx === currentPhotoIndex ? 1 : 0.5
-                    }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = idx === currentPhotoIndex ? 1 : 0.5; }}>
+                    }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = idx === currentPhotoIndex ? '1' : '0.5'; }}>
                       <img src={`${STRAPI_URL}${photo.url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   ))}

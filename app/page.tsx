@@ -9,6 +9,7 @@ import AnimatedCounter from './components/AnimatedCounter';
 import ScrollReveal from './components/ScrollReveal';
 import RestaurantSection from './components/RestaurantSection';
 import { BedIcon, GuestIcon } from './components/Icons';
+import Image from 'next/image';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const GOLD = '#C8A87C';
@@ -195,25 +196,31 @@ export default function Home() {
   };
 
   // ─── Hero Slider ─────────────────────────────────────────────
-  let mediaList = [];
+  type HotelMedia = {
+    url?: string;
+    mime?: string;
+    attributes?: { url?: string; mime?: string };
+  };
+
+  let mediaList: HotelMedia[] = [];
   if (hotel?.main_photo?.data && Array.isArray(hotel.main_photo.data)) {
-    mediaList = hotel.main_photo.data.map((item: any) => item.attributes);
+    mediaList = hotel.main_photo.data.map((item: { attributes?: HotelMedia }) => item.attributes ?? {});
   } else if (Array.isArray(hotel?.main_photo)) {
     mediaList = hotel.main_photo;
   } else if (hotel?.main_photo?.url) {
     mediaList = [hotel.main_photo];
   }
   const [mediaIndex, setMediaIndex] = useState(0);
-  const getMediaUrl = (media: any) => {
-    if (!media) return null;
+  const getMediaUrl = (media: HotelMedia | null | undefined) => {
+    if (!media) return undefined;
     const url = media.url || media?.attributes?.url;
-    if (!url) return null;
+    if (!url) return undefined;
     if (url.startsWith('http')) return url;
     const base = STRAPI_URL.endsWith('/') ? STRAPI_URL.slice(0, -1) : STRAPI_URL;
     const path = url.startsWith('/') ? url : `/${url}`;
     return `${base}${path}`;
   };
-  const isVideo = (media: any) => {
+  const isVideo = (media: HotelMedia | null | undefined) => {
     if (!media) return false;
     const mime = media.mime || media?.attributes?.mime;
     return mime?.startsWith('video/');
@@ -336,7 +343,9 @@ export default function Home() {
           {/* Dynamic Media Background */}
           {mediaList.length > 0 ? (
             <>
-              {mediaList.map((media, idx) => (
+              {mediaList.map((media, idx) => {
+                const mediaUrl = getMediaUrl(media);
+                return (
                 <div
                   key={idx}
                   style={{
@@ -349,7 +358,7 @@ export default function Home() {
                 >
                   {isVideo(media) ? (
                     <video
-                      src={getMediaUrl(media)}
+                      src={mediaUrl}
                       autoPlay
                       loop
                       muted
@@ -362,9 +371,9 @@ export default function Home() {
                         filter: 'brightness(1.2)',
                       }}
                     />
-                  ) : (
-                    <img
-                      src={getMediaUrl(media)}
+                  ) : mediaUrl ? (
+                    <Image
+                      src={mediaUrl}
                       alt={`${hotelName} - slide ${idx + 1}`}
                       style={{
                         width: '100%',
@@ -375,9 +384,10 @@ export default function Home() {
                         filter: 'brightness(1.2)',
                       }}
                     />
-                  )}
+                  ) : null}
                 </div>
-              ))}
+                );
+              })}
               <div style={{ position: 'absolute', inset: 0, zIndex: 2, background: 'rgba(0,0,0,0.4)' }} />
             </>
           ) : (
@@ -627,8 +637,8 @@ export default function Home() {
                   return (
                     <ScrollReveal key={card.documentId || idx} delay={200 + (idx * 100)}>
                       <div style={{ position: 'relative', overflow: 'hidden', border: '1px solid #E8E8E8', background: '#FFFFFF', padding: '2.5rem 2rem', textAlign: 'center', borderRadius: '0px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)', transition: 'border-color 0.7s ease, transform 0.7s ease, box-shadow 0.7s ease', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', zIndex: 1 }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#A89279'; e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 15px 30px rgba(21, 35, 46, 0.15)'; const bgOverlay = e.currentTarget.querySelector('.carmelina-bg-overlay'); if (bgOverlay) { bgOverlay.style.transform = 'translate(-50%, -50%) scale(1)'; bgOverlay.style.opacity = '1'; } const iconBox = e.currentTarget.querySelector('.carmelina-icon-box'); if (iconBox) iconBox.style.transform = 'rotateY(180deg)'; const titleEl = e.currentTarget.querySelector('.card-title'); const descEl = e.currentTarget.querySelector('.card-desc'); if (titleEl) titleEl.style.color = '#FFFFFF'; if (descEl) descEl.style.color = 'rgba(255, 255, 255, 0.85)'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E8E8E8'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; const bgOverlay = e.currentTarget.querySelector('.carmelina-bg-overlay'); if (bgOverlay) { bgOverlay.style.transform = 'translate(-50%, -50%) scale(0)'; bgOverlay.style.opacity = '0'; } const iconBox = e.currentTarget.querySelector('.carmelina-icon-box'); if (iconBox) iconBox.style.transform = 'rotateY(0deg)'; const titleEl = e.currentTarget.querySelector('.card-title'); const descEl = e.currentTarget.querySelector('.card-desc'); if (titleEl) titleEl.style.color = DARK_NAVY; if (descEl) descEl.style.color = '#666666'; }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#A89279'; e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 15px 30px rgba(21, 35, 46, 0.15)'; const bgOverlay = e.currentTarget.querySelector<HTMLElement>('.carmelina-bg-overlay'); if (bgOverlay) { bgOverlay.style.transform = 'translate(-50%, -50%) scale(1)'; bgOverlay.style.opacity = '1'; } const iconBox = e.currentTarget.querySelector<HTMLElement>('.carmelina-icon-box'); if (iconBox) iconBox.style.transform = 'rotateY(180deg)'; const titleEl = e.currentTarget.querySelector<HTMLElement>('.card-title'); const descEl = e.currentTarget.querySelector<HTMLElement>('.card-desc'); if (titleEl) titleEl.style.color = '#FFFFFF'; if (descEl) descEl.style.color = 'rgba(255, 255, 255, 0.85)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E8E8E8'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; const bgOverlay = e.currentTarget.querySelector<HTMLElement>('.carmelina-bg-overlay'); if (bgOverlay) { bgOverlay.style.transform = 'translate(-50%, -50%) scale(0)'; bgOverlay.style.opacity = '0'; } const iconBox = e.currentTarget.querySelector<HTMLElement>('.carmelina-icon-box'); if (iconBox) iconBox.style.transform = 'rotateY(0deg)'; const titleEl = e.currentTarget.querySelector<HTMLElement>('.card-title'); const descEl = e.currentTarget.querySelector<HTMLElement>('.card-desc'); if (titleEl) titleEl.style.color = DARK_NAVY; if (descEl) descEl.style.color = '#666666'; }}
                       >
                         <div className="carmelina-bg-overlay" style={{ position: 'absolute', top: '50%', left: '50%', width: '160%', height: '160%', background: '#15232e', borderRadius: '50%', transform: 'translate(-50%, -50%) scale(0)', opacity: 0, transition: 'transform 0.7s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.7s ease', pointerEvents: 'none', zIndex: -1 }} />
                         <div className="carmelina-icon-box" style={{ width: '80px', height: '80px', background: '#A89279', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: '2rem', borderRadius: '0px', flexShrink: 0, transition: 'transform 0.8s ease-in-out', perspective: '1000px', position: 'relative', zIndex: 2 }}><i className={data.icon || 'fa-solid fa-star'}></i></div>
@@ -651,7 +661,7 @@ export default function Home() {
                   const data = item.attributes || item;
                   return (
                     <ScrollReveal key={item.documentId || idx} delay={800 + (idx * 80)}>
-                      <div style={{ textAlign: 'center', minWidth: isMobile ? '70px' : 'auto', cursor: 'pointer', transition: 'all 0.4s ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; const iconEl = e.currentTarget.querySelector('.feature-icon'); if (iconEl) iconEl.style.color = '#A89279'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; const iconEl = e.currentTarget.querySelector('.feature-icon'); if (iconEl) iconEl.style.color = '#999'; }}>
+                      <div style={{ textAlign: 'center', minWidth: isMobile ? '70px' : 'auto', cursor: 'pointer', transition: 'all 0.4s ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; const iconEl = e.currentTarget.querySelector<HTMLElement>('.feature-icon'); if (iconEl) iconEl.style.color = '#A89279'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; const iconEl = e.currentTarget.querySelector<HTMLElement>('.feature-icon'); if (iconEl) iconEl.style.color = '#999'; }}>
                         <div className="feature-icon" style={{ fontSize: '2.5rem', color: '#999', marginBottom: '0.75rem', transition: 'color 0.4s ease' }}><i className={data.Icon_Class || 'fa-solid fa-circle'}></i></div>
                         <p style={{ fontSize: '0.7rem', fontWeight: 600, color: DARK_NAVY, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{data.Label || 'Service'}</p>
                       </div>

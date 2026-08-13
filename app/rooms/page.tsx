@@ -558,7 +558,7 @@ function RoomsContent() {
             })}
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '4rem 0', background: '#FFFFFF', border: '1px solid #E8E8E8', padding: '2rem', maxWidth: '448px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', background: '#FFFFFF', border: '1px solid #E8E8E8', padding: '2rem', maxWidth: '448px', margin: '0 auto' }}>
             <h3 style={{ fontSize: '1.25rem', color: '#1A1A1A', marginBottom: '0.5rem' }}>No Rooms Matched</h3>
             <p style={{ fontSize: '0.8rem', color: '#777777', marginBottom: '1.5rem' }}>Try relaxing your filter parameters to see more options.</p>
             <button
