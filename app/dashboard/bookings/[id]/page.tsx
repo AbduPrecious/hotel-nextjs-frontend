@@ -268,6 +268,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         }
         @media (max-width: 768px) {
           .contact-hero h1 { font-size: 2rem; }
+          .contact-hero p { font-size: 0.8rem; }
         }
       `}</style>
 
@@ -282,35 +283,35 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         </div>
         <h1>{roomTitle}</h1>
         <div
-  style={{
-    fontSize: isMobile ? '0.75rem' : '0.9rem',
-    color: 'rgba(255,255,255,0.7)',
-    letterSpacing: '0.05em',
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-  }}
->
-  {booking?.check_in && booking?.check_out ? (
-    <>
-      <span>Check‑in: {new Date(booking.check_in).toLocaleDateString()}</span>
-      <span>|</span>
-      <span>Check‑out: {new Date(booking.check_out).toLocaleDateString()}</span>
-      <span style={{ color: 'rgba(255,255,255,0.3)' }}></span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-        <GuestIcon size={16} color="rgba(255,255,255,0.7)" /> {capacity} Guests
-      </span>
-      <span style={{ color: 'rgba(255,255,255,0.3)' }}></span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-        <BedIcon size={16} color="rgba(255,255,255,0.7)" /> {bedType}
-      </span>
-    </>
-  ) : (
-    'Booking details'
-  )}
-</div>
+          style={{
+            fontSize: isMobile ? '0.75rem' : '0.9rem',
+            color: 'rgba(255,255,255,0.7)',
+            letterSpacing: '0.05em',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+          }}
+        >
+          {booking?.check_in && booking?.check_out ? (
+            <>
+              <span>Check‑in: {new Date(booking.check_in).toLocaleDateString()}</span>
+              <span>|</span>
+              <span>Check‑out: {new Date(booking.check_out).toLocaleDateString()}</span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}>•</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                <GuestIcon size={16} color="rgba(255,255,255,0.7)" /> {capacity} Guests
+              </span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}>•</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                <BedIcon size={16} color="rgba(255,255,255,0.7)" /> {bedType}
+              </span>
+            </>
+          ) : (
+            'Booking details'
+          )}
+        </div>
       </div>
 
       {/* ─── MAIN CONTENT ─── */}
@@ -485,13 +486,13 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               style={{
                 background: '#fff',
                 borderRadius: '1.5rem',
-                padding: '1.5rem',
+                padding: isMobile ? '1rem' : '1.5rem',
                 boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
               }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div>
-                  <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '0.25rem' }}>
+                  <h2 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '0.25rem' }}>
                     Booking Details
                   </h2>
                   <span
@@ -512,7 +513,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 </div>
 
                 {/* ─── Details Grid with Icons ─── */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
                   {/* Guest */}
                   <div>
                     <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Guest</div>
@@ -540,7 +541,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   <div>
                     <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Total</div>
                     <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: GOLD }}>
-                     
                       ETB {booking?.total || 0}
                     </strong>
                   </div>
@@ -554,6 +554,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                     display: 'flex',
                     justifyContent: 'space-between',
                     flexWrap: 'wrap',
+                    gap: '0.5rem',
                   }}
                 >
                   <div>
@@ -577,7 +578,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
                   <Link
                     href="/dashboard"
                     style={{
@@ -592,6 +593,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                       transition: 'all 0.3s ease',
                       flex: '1 1 auto',
                       textAlign: 'center',
+                      width: isMobile ? '100%' : 'auto',
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = DARK_NAVY;
@@ -624,6 +626,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '0.5rem',
+                        width: isMobile ? '100%' : 'auto',
                       }}
                       onMouseEnter={(e) => {
                         if (!cancelling) {
