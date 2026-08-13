@@ -5,12 +5,22 @@ import Link from 'next/link'; // ✅ Added missing import
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
+// Allow on-demand rendering when Strapi is unavailable at build time
+export const dynamicParams = true;
+
 // ─── Static Params ──────────────────────────────────────
 export async function generateStaticParams() {
-  const rooms = await getAvailableRooms();
-  return rooms.map((room: any) => ({
-    slug: room.documentId,
-  }));
+  try {
+    const rooms = await getAvailableRooms();
+    return rooms
+      .filter((room: { documentId?: string }) => Boolean(room?.documentId))
+      .map((room: { documentId: string }) => ({
+        slug: room.documentId,
+      }));
+  } catch (error) {
+    console.error('generateStaticParams failed:', error);
+    return [];
+  }
 }
 
 // ─── Page Component (Server) ────────────────────────────

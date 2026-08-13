@@ -1,6 +1,6 @@
 // app/booking/page.tsx
 'use client';
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -12,7 +12,7 @@ interface Room {
   };
 }
 
-export default function BookingPage() {
+function BookingContent() {
   const searchParams = useSearchParams();
   const preSelectedRoom = searchParams.get('room');
 
@@ -268,5 +268,19 @@ export default function BookingPage() {
         </button>
       </form>
     </main>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16 min-h-screen">
+          <p className="text-center text-gray-500">Loading booking form...</p>
+        </main>
+      }
+    >
+      <BookingContent />
+    </Suspense>
   );
 }

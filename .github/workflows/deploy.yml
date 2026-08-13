@@ -26,6 +26,8 @@ jobs:
         rm -f .env.production
         {
           echo "NEXT_PUBLIC_API_URL=https://api-hotel.qenenia.com";
+          echo "NEXT_PUBLIC_STRAPI_URL=https://api-hotel.qenenia.com";
+          echo "NEXT_PUBLIC_STRAPI_API_URL=https://api-hotel.qenenia.com/api";
         } >> .env.production
 
     - name: Build Next.js app

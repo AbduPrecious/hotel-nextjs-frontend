@@ -1,7 +1,13 @@
 // app/lib/api.ts
 
 // Added fallback URL to prevent crashes if env variable is missing
-const API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337/api';
+const STRAPI_BASE =
+  process.env.NEXT_PUBLIC_STRAPI_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:1337';
+const API_URL =
+  process.env.NEXT_PUBLIC_STRAPI_API_URL ||
+  `${STRAPI_BASE.replace(/\/$/, '')}/api`;
 
 // Helper to get image URL from any Strapi response structure
 export function getImageUrl(imageData: any): string | null {
@@ -24,39 +30,58 @@ export function getImageUrl(imageData: any): string | null {
 
 // Fetch Hotel Details (Singleton) - FIXED
 export async function getHotelDetails() {
-  const res = await fetch(`${API_URL}/hotel-detail?populate=*`);
-  const data = await res.json();
-  // For singletons, Strapi returns data directly, not inside attributes
-  // Try attributes first, fallback to the data itself
-  return data.data?.attributes || data.data || null;
+  try {
+    const res = await fetch(`${API_URL}/hotel-detail?populate=*`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    // For singletons, Strapi returns data directly, not inside attributes
+    // Try attributes first, fallback to the data itself
+    return data.data?.attributes || data.data || null;
+  } catch (error) {
+    console.error('Failed to fetch hotel details:', error);
+    return null;
+  }
 }
 
 export async function getAvailableRooms(featuredOnly: boolean = false) {
-  let url = `${API_URL}/rooms?filters[available][$eq]=true&populate=*`;
-  
-  // If featuredOnly is true, add the featured filter
-  if (featuredOnly) {
-    url = `${API_URL}/rooms?filters[available][$eq]=true&filters[featured][$eq]=true&populate=*`;
+  try {
+    let url = `${API_URL}/rooms?filters[available][$eq]=true&populate=*`;
+
+    // If featuredOnly is true, add the featured filter
+    if (featuredOnly) {
+      url = `${API_URL}/rooms?filters[available][$eq]=true&filters[featured][$eq]=true&populate=*`;
+    }
+
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.data || [];
+  } catch (error) {
+    console.error('Failed to fetch rooms:', error);
+    return [];
   }
-  
-  const res = await fetch(url);
-  const data = await res.json();
-  return data.data || [];
 }
 
 // Fetch a Single Room by ID (numeric or documentId)
 export async function getRoomById(id: string) {
-  // If it's a numeric ID, use the default endpoint
-  if (!isNaN(Number(id))) {
-    const res = await fetch(`${API_URL}/rooms/${id}?populate=*`);
+  try {
+    // If it's a numeric ID, use the default endpoint
+    if (!isNaN(Number(id))) {
+      const res = await fetch(`${API_URL}/rooms/${id}?populate=*`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.data || null;
+    }
+
+    // If it's a documentId, use a filter
+    const res = await fetch(`${API_URL}/rooms?filters[documentId][$eq]=${id}&populate=*`);
+    if (!res.ok) return null;
     const data = await res.json();
-    return data.data || null;
+    return data.data?.[0] || null;
+  } catch (error) {
+    console.error('Failed to fetch room:', error);
+    return null;
   }
-  
-  // If it's a documentId, use a filter
-  const res = await fetch(`${API_URL}/rooms?filters[documentId][$eq]=${id}&populate=*`);
-  const data = await res.json();
-  return data.data?.[0] || null;
 }
 
 // ─── FIXED Rich Text Renderer ──────────────────────────────────
