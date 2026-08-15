@@ -1,51 +1,27 @@
-name: Deploy Next.js App to cPanel via FTP
+name: Deploy Hotel Website App
 
 on:
   push:
     branches:
-      - main
+      - main # Change this if your default branch is 'master'
 
 jobs:
-  web-deploy:
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22.18.0
-
-    - name: Install dependencies
-      run: npm install
-
-    - name: Create env file for build
-      run: |
-        rm -f .env.production
-        {
-          echo "NEXT_PUBLIC_API_URL=https://api-hotel.qenenia.com";
-          echo "NEXT_PUBLIC_STRAPI_URL=https://api-hotel.qenenia.com";
-          echo "NEXT_PUBLIC_STRAPI_API_URL=https://api-hotel.qenenia.com/api";
-        } >> .env.production
-
-    - name: Build Next.js app
-      run: npm run build
-
-    - name: Deploy to cPanel via FTP
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-      with:
-        server: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        server-dir: ${{ secrets.CPANEL_DIR }}
-        local-dir: ./
-        protocol: ftp
-        exclude: |
-         .git/**
-         .github/**
-          node_modules/**
-         .next/cache/**
-         .env.production
-      # Optionally add any other files you don't need on the remote server
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/hotel-website
+            git pull origin main
+            # This rebuilds only what changed and restarts the container
+            docker compose up -d --build
+            # Optional: Clean up old unused images to save disk space
+            docker image prune -f

@@ -1,0 +1,16 @@
+services:
+  next-app:
+    build: .
+    restart: always
+    ports:
+      - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - NODE_ENV=production
+      # Server-side Strapi config (required in production)
+      # If STRAPI_URL isn't provided, default to host machine Strapi for local Docker runs.
+      - STRAPI_URL=${STRAPI_URL:-http://host.docker.internal:3001}
+      - STRAPI_TOKEN=${STRAPI_TOKEN}
+      # Optional client-exposed base URL for media URL construction
+      - NEXT_PUBLIC_STRAPI_URL=${NEXT_PUBLIC_STRAPI_URL:-http://host.docker.internal:3001}
