@@ -11,7 +11,7 @@ const GOLD = '#C8A87C';
 const DARK_NAVY = '#17232E';
 const BEIGE = '#ECEAE6';
 
-// ─── Helper: try multiple keys for token ──────────────────────
+// Helper: try multiple keys for token
 const getToken = () => {
   const keys = ['strapi_token', 'token', 'jwt', 'authToken'];
   for (const key of keys) {
@@ -33,7 +33,6 @@ export default function DashboardPage() {
   const [isMobile, setIsMobile] = useState(false);
   const recentStaysRef = useRef<HTMLDivElement>(null);
 
-  // ─── Mobile detection ──────────────────────────────────────────
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     setIsMobile(window.innerWidth < 768);
@@ -41,7 +40,6 @@ export default function DashboardPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // ─── Auth & data fetch ────────────────────────────────────────
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -54,13 +52,13 @@ export default function DashboardPage() {
   const fetchUserAndBookings = async (token: string) => {
     setLoading(true);
     try {
-      // 1. Get current user
+      // 1. Get current user (to get email and name)
       const userRes = await fetch(`${STRAPI_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!userRes.ok) {
         if (userRes.status === 401) {
-          // Token invalid – clear it and redirect
+          // Token invalid – clear and redirect
           localStorage.removeItem('strapi_token');
           localStorage.removeItem('token');
           localStorage.removeItem('jwt');
@@ -71,37 +69,21 @@ export default function DashboardPage() {
         throw new Error(`Failed to fetch user (status ${userRes.status})`);
       }
       const userData = await userRes.json();
-      setUserName(userData.username || userData.email || 'Guest');
-      setUserEmail(userData.email);
+      const email = userData.email;
+      setUserName(userData.username || email || 'Guest');
+      setUserEmail(email);
       // update localStorage for other pages
-      localStorage.setItem('userEmail', userData.email);
-      localStorage.setItem('userName', userData.username || userData.email || 'Guest');
+      localStorage.setItem('userEmail', email);
+      localStorage.setItem('userName', userData.username || email || 'Guest');
 
-      // 2. Fetch bookings filtered by this user's ID
+      // 2. Fetch bookings filtered by email (works regardless of relation)
       const bookingsRes = await fetch(
-        `${STRAPI_URL}/bookings?filters[user][id][$eq]=${userData.id}&populate=room,room.photos&sort=createdAt:desc`,
+        `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=room,room.photos&sort=createdAt:desc`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       if (!bookingsRes.ok) {
-        // If 403, maybe user lacks 'find' on bookings – fallback to email filter
-        if (bookingsRes.status === 403) {
-          console.warn('Permission denied for user filter, falling back to email filter');
-          const fallbackRes = await fetch(
-            `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(userData.email)}&populate=room,room.photos&sort=createdAt:desc`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          if (!fallbackRes.ok) {
-            const errText = await fallbackRes.text();
-            throw new Error(`Fallback fetch failed (${fallbackRes.status}): ${errText}`);
-          }
-          const fallbackData = await fallbackRes.json();
-          setBookings(fallbackData.data || []);
-          return;
-        }
         const errText = await bookingsRes.text();
         throw new Error(`Failed to fetch bookings (${bookingsRes.status}): ${errText}`);
       }
