@@ -49,89 +49,65 @@ export default function DashboardPage() {
   }, [router]);
 
   const fetchUserAndBookings = async (token: string) => {
-  setLoading(true);
-  try {
-    // 1. Get user
-    const userRes = await fetch(`${STRAPI_URL}/users/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!userRes.ok) {
-      if (userRes.status === 401) {
-        localStorage.removeItem('strapi_token');
-        localStorage.removeItem('token');
-        localStorage.removeItem('jwt');
-        localStorage.removeItem('authToken');
-        router.push('/login');
-        return;
-      }
-      throw new Error(`Failed to fetch user (status ${userRes.status})`);
-    }
-    const userData = await userRes.json();
-    const email = userData.email;
-    setUserName(userData.username || email || 'Guest');
-    setUserEmail(email);
-    localStorage.setItem('userEmail', email);
-    localStorage.setItem('userName', userData.username || email || 'Guest');
-
-    // 2. Fetch bookings WITH populate=room (so we get the room relation)
-    const bookingsRes = await fetch(
-      `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=room&sort=createdAt:desc`,
-      {
+    setLoading(true);
+    try {
+      // 1. Get current user (to get ID and email)
+      const userRes = await fetch(`${STRAPI_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    if (!bookingsRes.ok) {
-      const errText = await bookingsRes.text();
-      throw new Error(`Failed to fetch bookings (${bookingsRes.status}): ${errText}`);
-    }
-    const data = await bookingsRes.json();
-    const bookingsData = data.data || [];
-
-    // 3. For each booking, fetch the full room data (including photos)
-    const enrichedBookings = await Promise.all(
-      bookingsData.map(async (booking: any) => {
-        // Now booking.room should exist (thanks to populate=room)
-        const roomDocId = booking.room?.documentId || booking.room?.id;
-        if (!roomDocId) {
-          console.warn('Booking has no room:', booking.documentId);
-          return booking;
+      });
+      if (!userRes.ok) {
+        if (userRes.status === 401) {
+          localStorage.removeItem('strapi_token');
+          localStorage.removeItem('token');
+          localStorage.removeItem('jwt');
+          localStorage.removeItem('authToken');
+          router.push('/login');
+          return;
         }
+        throw new Error(`Failed to fetch user (status ${userRes.status})`);
+      }
+      const userData = await userRes.json();
+      const userId = userData.id;
+      const email = userData.email;
+      setUserName(userData.username || email || 'Guest');
+      setUserEmail(email);
+      localStorage.setItem('userEmail', email);
+      localStorage.setItem('userName', userData.username || email || 'Guest');
 
-        try {
-          const roomRes = await fetch(
-            `${STRAPI_URL}/rooms/${roomDocId}?populate=photos`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          if (roomRes.ok) {
-            const roomData = await roomRes.json();
-            const roomAttr = roomData.data?.attributes || roomData.data || {};
-            // Attach full room data to booking
-            booking.room = {
-              ...(booking.room || {}),
-              ...roomAttr,
-              documentId: roomDocId,
-              photos: roomAttr.photos || [],
-            };
-          } else {
-            console.warn(`Failed to fetch room ${roomDocId}:`, roomRes.status);
-          }
-        } catch (err) {
-          console.warn(`Error fetching room ${roomDocId}:`, err);
+      // 2. Fetch bookings filtered by user ID (much more reliable)
+      //    Use populate=room.photos to get room and its photos in one go
+      const bookingsRes = await fetch(
+        `${STRAPI_URL}/bookings?filters[user][id][$eq]=${userId}&populate=room.photos&sort=createdAt:desc`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!bookingsRes.ok) {
+        const errText = await bookingsRes.text();
+        throw new Error(`Failed to fetch bookings (${bookingsRes.status}): ${errText}`);
+      }
+      const data = await bookingsRes.json();
+      const bookingsData = data.data || [];
+
+      // 3. Enrich with full room data (if needed, but populate already gave it)
+      //    We can keep it as is because populate=room.photos already includes room and photos
+      //    However, if the response structure differs, we can normalize it:
+      const enriched = bookingsData.map((booking: any) => {
+        // Ensure room.photos is always an array
+        if (booking.room && booking.room.photos && !Array.isArray(booking.room.photos)) {
+          booking.room.photos = booking.room.photos.data || [];
         }
         return booking;
-      })
-    );
+      });
 
-    setBookings(enrichedBookings);
-  } catch (error: any) {
-    console.error('Error fetching dashboard data:', error);
-    showAlert(`Could not load dashboard data: ${error.message || 'Please try again.'}`, 'error');
-  } finally {
-    setLoading(false);
-  }
-};
+      setBookings(enriched);
+    } catch (error: any) {
+      console.error('Error fetching dashboard data:', error);
+      showAlert(`Could not load dashboard data: ${error.message || 'Please try again.'}`, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('strapi_token');
@@ -247,6 +223,7 @@ export default function DashboardPage() {
     );
   }
 
+  // ─── Main render (unchanged) ──────────────────────────────────
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: BEIGE }}>
       <style>{`
