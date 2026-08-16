@@ -72,13 +72,12 @@ export default function DashboardPage() {
       const email = userData.email;
       setUserName(userData.username || email || 'Guest');
       setUserEmail(email);
-      // update localStorage for other pages
       localStorage.setItem('userEmail', email);
       localStorage.setItem('userName', userData.username || email || 'Guest');
 
-      // 2. Fetch bookings filtered by email (works regardless of relation)
+      // 2. Fetch bookings filtered by email – POPULATE FIX: use dot notation
       const bookingsRes = await fetch(
-        `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=room,room.photos&sort=createdAt:desc`,
+        `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=room.photos&sort=createdAt:desc`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
