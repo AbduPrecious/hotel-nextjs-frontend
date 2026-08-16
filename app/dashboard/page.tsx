@@ -11,6 +11,16 @@ const GOLD = '#C8A87C';
 const DARK_NAVY = '#17232E';
 const BEIGE = '#ECEAE6';
 
+// ─── Helper: try multiple keys for token ──────────────────────
+const getToken = () => {
+  const keys = ['strapi_token', 'token', 'jwt', 'authToken'];
+  for (const key of keys) {
+    const token = localStorage.getItem(key);
+    if (token) return token;
+  }
+  return null;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const { showAlert } = useAlert();
@@ -23,6 +33,7 @@ export default function DashboardPage() {
   const [isMobile, setIsMobile] = useState(false);
   const recentStaysRef = useRef<HTMLDivElement>(null);
 
+  // ─── Mobile detection ──────────────────────────────────────────
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     setIsMobile(window.innerWidth < 768);
@@ -30,8 +41,9 @@ export default function DashboardPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // ─── Auth & data fetch ────────────────────────────────────────
   useEffect(() => {
-    const token = localStorage.getItem('strapi_token');
+    const token = getToken();
     if (!token) {
       router.push('/login');
       return;
@@ -39,7 +51,6 @@ export default function DashboardPage() {
     fetchUserAndBookings(token);
   }, [router]);
 
-  // ─── Fetch user + their bookings ───────────────────────────────
   const fetchUserAndBookings = async (token: string) => {
     setLoading(true);
     try {
@@ -49,16 +60,20 @@ export default function DashboardPage() {
       });
       if (!userRes.ok) {
         if (userRes.status === 401) {
+          // Token invalid – clear it and redirect
           localStorage.removeItem('strapi_token');
+          localStorage.removeItem('token');
+          localStorage.removeItem('jwt');
+          localStorage.removeItem('authToken');
           router.push('/login');
           return;
         }
-        throw new Error('Failed to fetch user');
+        throw new Error(`Failed to fetch user (status ${userRes.status})`);
       }
       const userData = await userRes.json();
       setUserName(userData.username || userData.email || 'Guest');
       setUserEmail(userData.email);
-      // (Optional) update localStorage for other pages
+      // update localStorage for other pages
       localStorage.setItem('userEmail', userData.email);
       localStorage.setItem('userName', userData.username || userData.email || 'Guest');
 
@@ -70,18 +85,31 @@ export default function DashboardPage() {
         }
       );
       if (!bookingsRes.ok) {
-        // If 403, maybe user lacks permission – but we'll treat as empty
+        // If 403, maybe user lacks 'find' on bookings – fallback to email filter
         if (bookingsRes.status === 403) {
-          setBookings([]);
+          console.warn('Permission denied for user filter, falling back to email filter');
+          const fallbackRes = await fetch(
+            `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(userData.email)}&populate=room,room.photos&sort=createdAt:desc`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          if (!fallbackRes.ok) {
+            const errText = await fallbackRes.text();
+            throw new Error(`Fallback fetch failed (${fallbackRes.status}): ${errText}`);
+          }
+          const fallbackData = await fallbackRes.json();
+          setBookings(fallbackData.data || []);
           return;
         }
-        throw new Error('Failed to fetch bookings');
+        const errText = await bookingsRes.text();
+        throw new Error(`Failed to fetch bookings (${bookingsRes.status}): ${errText}`);
       }
       const data = await bookingsRes.json();
       setBookings(data.data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
-      showAlert('Could not load dashboard data. Please try again.', 'error');
+      showAlert(`Could not load dashboard data: ${error.message || 'Please try again.'}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -90,6 +118,9 @@ export default function DashboardPage() {
   // ─── Logout ─────────────────────────────────────────────────────
   const handleLogout = () => {
     localStorage.removeItem('strapi_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('authToken');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
     router.push('/login');
@@ -158,6 +189,7 @@ export default function DashboardPage() {
   ).length;
   const rejected = total - pending - approved;
 
+  // ─── Loading state ─────────────────────────────────────────────
   if (loading) {
     return (
       <div
@@ -189,6 +221,7 @@ export default function DashboardPage() {
     );
   }
 
+  // ─── Main render ──────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: BEIGE }}>
       <style>{`
@@ -499,8 +532,7 @@ export default function DashboardPage() {
                   const bData = booking.attributes || booking;
                   const roomData = bData?.room?.attributes || bData?.room || {};
                   const imageUrl = roomData?.photos?.[0]?.url || '/placeholder-room.jpg';
-                  // Build correct image URL
-                  const baseUrl = STRAPI_URL.replace('/api', ''); // remove /api
+                  const baseUrl = STRAPI_URL.replace('/api', '');
                   const imgSrc = imageUrl.startsWith('http')
                     ? imageUrl
                     : `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
