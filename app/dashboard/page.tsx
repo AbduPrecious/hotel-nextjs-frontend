@@ -73,10 +73,9 @@ export default function DashboardPage() {
       localStorage.setItem('userEmail', email);
       localStorage.setItem('userName', userData.username || email || 'Guest');
 
-      // 2. Fetch bookings with populate=*
-      // This will include all relations: room, room.photos, etc.
+      // 2. Fetch bookings WITHOUT populate (reliable)
       const bookingsRes = await fetch(
-        `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=*&sort=createdAt:desc`,
+        `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&sort=createdAt:desc`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -86,7 +85,47 @@ export default function DashboardPage() {
         throw new Error(`Failed to fetch bookings (${bookingsRes.status}): ${errText}`);
       }
       const data = await bookingsRes.json();
-      setBookings(data.data || []);
+      const bookingsData = data.data || [];
+
+      // 3. For each booking, fetch the full room data
+      const enrichedBookings = await Promise.all(
+        bookingsData.map(async (booking: any) => {
+          // Extract room documentId from booking
+          const roomDocId = booking.room?.documentId || booking.room?.id;
+          if (!roomDocId) {
+            console.warn('Booking has no room:', booking.documentId);
+            return booking;
+          }
+
+          try {
+            // Fetch room with photos
+            const roomRes = await fetch(
+              `${STRAPI_URL}/rooms/${roomDocId}?populate=photos`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            if (roomRes.ok) {
+              const roomData = await roomRes.json();
+              const roomAttr = roomData.data?.attributes || roomData.data || {};
+              // Attach full room data to booking
+              booking.room = {
+                ...(booking.room || {}),
+                ...roomAttr,
+                documentId: roomDocId,
+                photos: roomAttr.photos || [],
+              };
+            } else {
+              console.warn(`Failed to fetch room ${roomDocId}:`, roomRes.status);
+            }
+          } catch (err) {
+            console.warn(`Error fetching room ${roomDocId}:`, err);
+          }
+          return booking;
+        })
+      );
+
+      setBookings(enrichedBookings);
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
       showAlert(`Could not load dashboard data: ${error.message || 'Please try again.'}`, 'error');
@@ -159,7 +198,6 @@ export default function DashboardPage() {
     );
   };
 
-  // Helper: get image URL from photo object
   const getImageUrl = (photo: any) => {
     if (!photo) return null;
     const url = photo?.url || photo?.attributes?.url || photo?.data?.attributes?.url;
@@ -516,7 +554,7 @@ export default function DashboardPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {bookings.map((booking) => {
                   const bData = booking.attributes || booking;
-                  const roomData = bData?.room?.attributes || bData?.room || {};
+                  const roomData = bData?.room || {};
                   const photos = roomData?.photos || [];
                   const firstPhoto = photos.length > 0 ? photos[0] : null;
                   const imgSrc = getImageUrl(firstPhoto);
