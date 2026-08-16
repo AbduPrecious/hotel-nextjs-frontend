@@ -48,7 +48,7 @@ export default function DashboardPage() {
     fetchUserAndBookings(token);
   }, [router]);
 
-  const fetchUserAndBookings = async (token: string) => {
+ const fetchUserAndBookings = async (token: string) => {
   setLoading(true);
   try {
     // 1. Get current user
@@ -73,9 +73,9 @@ export default function DashboardPage() {
     localStorage.setItem('userEmail', email);
     localStorage.setItem('userName', userData.username || email || 'Guest');
 
-    // 2. Fetch bookings with populate=room (gets room relation)
+    // 2. Fetch bookings with populate=room.photos (gets room and photos in one call)
     const bookingsRes = await fetch(
-      `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=room&sort=createdAt:desc`,
+      `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=room.photos&sort=createdAt:desc`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -87,53 +87,23 @@ export default function DashboardPage() {
     const data = await bookingsRes.json();
     const bookingsData = data.data || [];
 
-    // 3. For each booking, fetch the full room data (including photos)
-    const enrichedBookings = await Promise.all(
-      bookingsData.map(async (booking: any) => {
-        // 🔥 KEY FIX: Use booking.room.documentId (the room's ID, not the booking's ID)
-        const roomDocId = booking.room?.documentId;
-        if (!roomDocId) {
-          console.warn('⚠️ Booking has no room documentId:', booking.documentId);
-          // Return booking with placeholder room data
-          return {
-            ...booking,
-            room: {
-              ...(booking.room || {}),
-              title: 'Room Not Found',
-              photos: [],
-            },
-          };
-        }
+    // 3. Process the bookings (the room data is already included via populate)
+    const processedBookings = bookingsData.map((booking: any) => {
+      // Check if room data exists
+      if (!booking.room) {
+        console.warn('⚠️ Booking has no room:', booking.documentId);
+        return {
+          ...booking,
+          room: {
+            title: 'Room Not Found',
+            photos: [],
+          },
+        };
+      }
+      return booking;
+    });
 
-        try {
-          // Fetch room with photos using the room's documentId
-          const roomRes = await fetch(
-            `${STRAPI_URL}/rooms/${roomDocId}?populate=photos`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          if (roomRes.ok) {
-            const roomData = await roomRes.json();
-            const roomAttr = roomData.data || {};
-            // Attach full room data to booking
-            booking.room = {
-              ...(booking.room || {}),
-              ...roomAttr,
-              documentId: roomDocId,
-              photos: roomAttr.photos || [],
-            };
-          } else {
-            console.warn(`❌ Failed to fetch room ${roomDocId}:`, roomRes.status);
-          }
-        } catch (err) {
-          console.warn(`❌ Error fetching room ${roomDocId}:`, err);
-        }
-        return booking;
-      })
-    );
-
-    setBookings(enrichedBookings);
+    setBookings(processedBookings);
   } catch (error: any) {
     console.error('Error fetching dashboard data:', error);
     showAlert(`Could not load dashboard data: ${error.message || 'Please try again.'}`, 'error');
