@@ -1,5 +1,6 @@
 services:
   next-app:
+    image: ${HOTEL_IMAGE:-ghcr.io/abduprecious/hotel-nextjs-frontend:latest}
     build: .
     restart: always
     ports:

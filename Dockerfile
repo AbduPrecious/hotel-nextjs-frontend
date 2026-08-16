@@ -12,6 +12,15 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# NEXT_PUBLIC_* values are inlined at build time
+ARG NEXT_PUBLIC_STRAPI_URL
+ARG NEXT_PUBLIC_STRAPI_API_URL
+ARG STRAPI_URL
+ENV NEXT_PUBLIC_STRAPI_URL=$NEXT_PUBLIC_STRAPI_URL
+ENV NEXT_PUBLIC_STRAPI_API_URL=$NEXT_PUBLIC_STRAPI_API_URL
+ENV STRAPI_URL=$STRAPI_URL
+
 RUN npm run build
 
 # Production image, copy all the files and run next
