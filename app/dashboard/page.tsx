@@ -58,7 +58,6 @@ export default function DashboardPage() {
       });
       if (!userRes.ok) {
         if (userRes.status === 401) {
-          // Token invalid – clear and redirect
           localStorage.removeItem('strapi_token');
           localStorage.removeItem('token');
           localStorage.removeItem('jwt');
@@ -75,13 +74,13 @@ export default function DashboardPage() {
       localStorage.setItem('userEmail', email);
       localStorage.setItem('userName', userData.username || email || 'Guest');
 
-      // 2. Fetch bookings filtered by email – POPULATE FIX: use dot notation
-      const bookingsRes = await fetch(
-        `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=room.photos&sort=createdAt:desc`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      // 2. Build the URL with populate=* (safe and works in v5)
+      const url = `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=*&sort=createdAt:desc`;
+      console.log('📡 Fetching bookings from:', url); // <-- Check browser console
+
+      const bookingsRes = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!bookingsRes.ok) {
         const errText = await bookingsRes.text();
         throw new Error(`Failed to fetch bookings (${bookingsRes.status}): ${errText}`);
