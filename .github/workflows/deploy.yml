@@ -20,7 +20,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 2222
           script: |
-            cd /var/www/hotel-website
+            cd /var/www/hotel-website/hotel-nextjs-frontend
             git pull origin main
             # This rebuilds only what changed and restarts the container
             docker compose up -d --build
