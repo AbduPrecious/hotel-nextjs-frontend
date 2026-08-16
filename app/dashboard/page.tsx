@@ -11,7 +11,6 @@ const GOLD = '#C8A87C';
 const DARK_NAVY = '#17232E';
 const BEIGE = '#ECEAE6';
 
-// Helper: try multiple keys for token
 const getToken = () => {
   const keys = ['strapi_token', 'token', 'jwt', 'authToken'];
   for (const key of keys) {
@@ -52,7 +51,7 @@ export default function DashboardPage() {
   const fetchUserAndBookings = async (token: string) => {
     setLoading(true);
     try {
-      // 1. Get current user (to get email and name)
+      // 1. Get user
       const userRes = await fetch(`${STRAPI_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -74,19 +73,47 @@ export default function DashboardPage() {
       localStorage.setItem('userEmail', email);
       localStorage.setItem('userName', userData.username || email || 'Guest');
 
-      // 2. Build the URL with populate=* (safe and works in v5)
-      const url = `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=*&sort=createdAt:desc`;
-      console.log('📡 Fetching bookings from:', url); // <-- Check browser console
-
-      const bookingsRes = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // 2. Fetch bookings WITHOUT populate
+      const bookingsRes = await fetch(
+        `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&sort=createdAt:desc`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (!bookingsRes.ok) {
         const errText = await bookingsRes.text();
         throw new Error(`Failed to fetch bookings (${bookingsRes.status}): ${errText}`);
       }
       const data = await bookingsRes.json();
-      setBookings(data.data || []);
+      const bookingsData = data.data || [];
+
+      // 3. For each booking, fetch the full room data (including photos)
+      const enrichedBookings = await Promise.all(
+        bookingsData.map(async (booking: any) => {
+          const roomId = booking.room?.documentId || booking.room?.id;
+          if (!roomId) return booking; // no room linked
+
+          try {
+            const roomRes = await fetch(
+              `${STRAPI_URL}/rooms/${roomId}?populate=photos`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            if (roomRes.ok) {
+              const roomData = await roomRes.json();
+              const roomAttr = roomData.data?.attributes || roomData.data || {};
+              // Attach room data to booking
+              booking.room = { ...booking.room, ...roomAttr };
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch room ${roomId}:`, err);
+          }
+          return booking;
+        })
+      );
+
+      setBookings(enrichedBookings);
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
       showAlert(`Could not load dashboard data: ${error.message || 'Please try again.'}`, 'error');
@@ -95,7 +122,6 @@ export default function DashboardPage() {
     }
   };
 
-  // ─── Logout ─────────────────────────────────────────────────────
   const handleLogout = () => {
     localStorage.removeItem('strapi_token');
     localStorage.removeItem('token');
@@ -169,7 +195,6 @@ export default function DashboardPage() {
   ).length;
   const rejected = total - pending - approved;
 
-  // ─── Loading state ─────────────────────────────────────────────
   if (loading) {
     return (
       <div
@@ -201,7 +226,7 @@ export default function DashboardPage() {
     );
   }
 
-  // ─── Main render ──────────────────────────────────────────────
+  // ─── Main render (same as before) ──────────────────────────────
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: BEIGE }}>
       <style>{`
@@ -359,7 +384,6 @@ export default function DashboardPage() {
         </div>
       </aside>
 
-      {/* ─── MOBILE OVERLAY ────────────────────────────────────── */}
       {isMobile && sidebarOpen && (
         <div
           style={{
@@ -372,7 +396,6 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* ─── MAIN CONTENT ──────────────────────────────────────── */}
       <div
         style={{
           flex: 1,
@@ -425,7 +448,7 @@ export default function DashboardPage() {
         )}
 
         <div style={{ maxWidth: '1180px', margin: '0 auto', width: '100%' }}>
-          {/* ─── STAT CARDS ──────────────────────────────────────── */}
+          {/* Stats */}
           <div
             style={{
               display: 'grid',
@@ -469,7 +492,7 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* ─── RECENT STAYS ────────────────────────────────────── */}
+          {/* Recent Stays */}
           <div
             ref={recentStaysRef}
             style={{
@@ -574,7 +597,6 @@ export default function DashboardPage() {
                               {roomData?.title || 'Room'}
                             </Link>
                           </div>
-
                           <div
                             style={{
                               display: 'flex',
