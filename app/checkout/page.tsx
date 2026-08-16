@@ -116,89 +116,111 @@ function CheckoutContent() {
   const { nights, total } = calculateDetails();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
+  e.preventDefault();
+  setSubmitting(true);
 
-    const checkInDate = new Date(checkInParam!);
-    const checkOutDate = new Date(checkOutParam!);
-    if (checkOutDate <= checkInDate) {
-      showAlert('Check‑out must be after check‑in.', 'error');
-      setSubmitting(false);
-      return;
+  const checkInDate = new Date(checkInParam!);
+  const checkOutDate = new Date(checkOutParam!);
+  if (checkOutDate <= checkInDate) {
+    showAlert('Check‑out must be after check‑in.', 'error');
+    setSubmitting(false);
+    return;
+  }
+
+  const paymentMethod = formData.payment_method;
+  if (paymentMethod === 'bank_transfer' && !formData.screenshot) {
+    showAlert('Please upload the bank transfer receipt or screenshot.', 'warning');
+    setSubmitting(false);
+    return;
+  }
+
+  const bookingData = {
+    name: formData.name,
+    email: formData.email,
+    phone: formData.phone,
+    room: room.documentId,
+    check_in: checkInParam,
+    check_out: checkOutParam,
+    total: Number(total),
+    booking_status: 'Pending',
+    payment_method: paymentMethod,
+  };
+
+  try {
+    // 1. Create the booking
+    const res = await fetch(`${STRAPI_URL}/api/bookings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: bookingData }),
+    });
+
+    const responseText = await res.text();
+    if (!res.ok) {
+      console.error('❌ Booking creation error:', responseText);
+      throw new Error(`Booking creation failed (${res.status}): ${responseText}`);
     }
 
-    const paymentMethod = formData.payment_method;
-    if (paymentMethod === 'bank_transfer' && !formData.screenshot) {
-      showAlert('Please upload the bank transfer receipt or screenshot.', 'warning');
-      setSubmitting(false);
-      return;
+    const responseData = JSON.parse(responseText);
+    const docId = responseData?.data?.documentId;
+    if (!docId) throw new Error('No documentId returned from Strapi');
+
+    // 2. If bank transfer, upload the screenshot
+    if (paymentMethod === 'bank_transfer' && formData.screenshot) {
+      const fileFormData = new FormData();
+      fileFormData.append('files', formData.screenshot); // field name must be 'files'
+
+      const uploadRes = await fetch(`${STRAPI_URL}/api/upload`, {
+        method: 'POST',
+        // ⚠️ DO NOT set Content-Type – browser sets it for FormData
+        body: fileFormData,
+      });
+
+      if (!uploadRes.ok) {
+        const errText = await uploadRes.text();
+        console.error('❌ Upload error:', errText);
+        throw new Error(`File upload failed (${uploadRes.status}): ${errText}`);
+      }
+
+      const uploadData = await uploadRes.json();
+      const fileId = uploadData[0]?.id;
+      if (!fileId) throw new Error('No file id returned from upload');
+
+      // 3. Attach the file to the booking
+      //    The field name must match your Strapi content-type field.
+      //    If it's not 'screenshot', change it below.
+      const updatePayload = { data: { screenshot: fileId } };
+
+      const updateRes = await fetch(`${STRAPI_URL}/api/bookings/${docId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (!updateRes.ok) {
+        const errText = await updateRes.text();
+        console.error('❌ Update error:', errText);
+        // Don't throw – we already have the booking, but let user know
+        showAlert('Booking created, but screenshot attachment failed. Please contact support.', 'warning');
+      }
     }
 
-    const bookingData = {
+    // 4. Redirect to confirmation
+    const params = new URLSearchParams({
       name: formData.name,
       email: formData.email,
-      phone: formData.phone,
-      room: room.documentId, // Strapi v5 uses documentId
-      check_in: checkInParam,
-      check_out: checkOutParam,
-      total: Number(total),
-      booking_status: 'Pending',
-      payment_method: paymentMethod,
-    };
-
-    try {
-      const res = await fetch(`${STRAPI_URL}/api/bookings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: bookingData }),
-      });
-
-      const responseText = await res.text();
-
-      if (!res.ok) {
-        console.error('❌ Strapi error:', responseText);
-        throw new Error(`Strapi error (${res.status}): ${responseText}`);
-      }
-
-      const responseData = JSON.parse(responseText);
-      const docId = responseData?.data?.documentId;
-
-      if (paymentMethod === 'bank_transfer' && formData.screenshot && docId) {
-        const fileFormData = new FormData();
-        fileFormData.append('files', formData.screenshot);
-        const uploadRes = await fetch(`${STRAPI_URL}/api/upload`, {
-          method: 'POST',
-          body: fileFormData,
-        });
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          const fileId = uploadData[0]?.id;
-          if (fileId) {
-            await fetch(`${STRAPI_URL}/api/bookings/${docId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ data: { screenshot: fileId } }),
-            });
-          }
-        }
-      }
-
-      const params = new URLSearchParams({
-        name: formData.name,
-        email: formData.email,
-        checkIn: checkInParam!,
-        checkOut: checkOutParam!,
-        totalPrice: total.toString(),
-        roomName: room.title,
-        paymentMethod: paymentMethod,
-      });
-      router.push(`/booking-confirmation?${params.toString()}`);
-    } catch (error: any) {
-      showAlert(error.message, 'error');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+      checkIn: checkInParam!,
+      checkOut: checkOutParam!,
+      totalPrice: total.toString(),
+      roomName: room.title,
+      paymentMethod: paymentMethod,
+    });
+    router.push(`/booking-confirmation?${params.toString()}`);
+  } catch (error: any) {
+    showAlert(error.message || 'Something went wrong', 'error');
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const buildImageUrl = (relativeOrAbsolute: string | null) => {
     if (!relativeOrAbsolute) return null;
