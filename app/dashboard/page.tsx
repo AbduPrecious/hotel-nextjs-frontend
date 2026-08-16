@@ -87,12 +87,14 @@ export default function DashboardPage() {
     const data = await bookingsRes.json();
     const bookingsData = data.data || [];
 
-    // 3. Process bookings – room data is already there!
+    // 3. Process bookings – room data is already included
     const processedBookings = bookingsData.map((booking: any) => {
-      // The room data is directly available as booking.room
-      // Just make sure photos is always an array
-      if (booking.room && booking.room.photos && !Array.isArray(booking.room.photos)) {
-        booking.room.photos = booking.room.photos.data || [];
+      // If the room exists but photos might be nested, ensure it's an array
+      if (booking.room) {
+        // Ensure photos is an array (sometimes it's an object with 'data' key)
+        if (booking.room.photos && !Array.isArray(booking.room.photos)) {
+          booking.room.photos = booking.room.photos.data || [];
+        }
       }
       return booking;
     });
