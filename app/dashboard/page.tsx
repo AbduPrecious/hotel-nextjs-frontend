@@ -90,24 +90,36 @@ export default function DashboardPage() {
       // 3. For each booking, fetch the full room data (including photos)
       const enrichedBookings = await Promise.all(
         bookingsData.map(async (booking: any) => {
-          const roomId = booking.room?.documentId || booking.room?.id;
-          if (!roomId) return booking; // no room linked
+          const roomDocId = booking.room?.documentId || booking.room?.id;
+          if (!roomDocId) {
+            console.warn('Booking has no room:', booking.documentId);
+            return booking;
+          }
 
           try {
             const roomRes = await fetch(
-              `${STRAPI_URL}/rooms/${roomId}?populate=photos`,
+              `${STRAPI_URL}/rooms/${roomDocId}?populate=photos`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }
             );
             if (roomRes.ok) {
               const roomData = await roomRes.json();
+              // Extract room attributes (Strapi v5 returns data directly)
               const roomAttr = roomData.data?.attributes || roomData.data || {};
-              // Attach room data to booking
-              booking.room = { ...booking.room, ...roomAttr };
+              // Attach the full room data to the booking
+              booking.room = {
+                ...(booking.room || {}),
+                ...roomAttr,
+                documentId: roomDocId,
+                // Ensure photos is always an array
+                photos: roomAttr.photos || [],
+              };
+            } else {
+              console.warn(`Failed to fetch room ${roomDocId}:`, roomRes.status);
             }
           } catch (err) {
-            console.warn(`Failed to fetch room ${roomId}:`, err);
+            console.warn(`Error fetching room ${roomDocId}:`, err);
           }
           return booking;
         })
@@ -186,6 +198,17 @@ export default function DashboardPage() {
     );
   };
 
+  // Helper to get image URL
+  const getImageUrl = (photo: any) => {
+    if (!photo) return null;
+    const url = photo?.url || photo?.attributes?.url || photo?.data?.attributes?.url;
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const base = STRAPI_URL.replace('/api', '');
+    const path = url.startsWith('/') ? url : `/${url}`;
+    return `${base}${path}`;
+  };
+
   const total = bookings.length;
   const pending = bookings.filter(
     (b) => (b.attributes?.booking_status || b.booking_status || '').toLowerCase() === 'pending'
@@ -226,7 +249,7 @@ export default function DashboardPage() {
     );
   }
 
-  // ─── Main render (same as before) ──────────────────────────────
+  // ─── Main render ──────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: BEIGE }}>
       <style>{`
@@ -533,12 +556,10 @@ export default function DashboardPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {bookings.map((booking) => {
                   const bData = booking.attributes || booking;
-                  const roomData = bData?.room?.attributes || bData?.room || {};
-                  const imageUrl = roomData?.photos?.[0]?.url || '/placeholder-room.jpg';
-                  const baseUrl = STRAPI_URL.replace('/api', '');
-                  const imgSrc = imageUrl.startsWith('http')
-                    ? imageUrl
-                    : `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+                  const roomData = bData?.room || {};
+                  const photos = roomData?.photos || [];
+                  const firstPhoto = photos.length > 0 ? photos[0] : null;
+                  const imgSrc = getImageUrl(firstPhoto);
 
                   return (
                     <div
@@ -562,13 +583,20 @@ export default function DashboardPage() {
                           overflow: 'hidden',
                           background: '#E0E0E0',
                           flexShrink: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
-                        <img
-                          src={imgSrc}
-                          alt="Room"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
+                        {imgSrc ? (
+                          <img
+                            src={imgSrc}
+                            alt={roomData?.title || 'Room'}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <span style={{ color: '#999', fontSize: '0.65rem' }}>No Image</span>
+                        )}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div
