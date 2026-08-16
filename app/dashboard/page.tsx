@@ -25,7 +25,6 @@ export default function DashboardPage() {
   const { showAlert } = useAlert();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -48,65 +47,60 @@ export default function DashboardPage() {
     fetchUserAndBookings(token);
   }, [router]);
 
- const fetchUserAndBookings = async (token: string) => {
-  setLoading(true);
-  try {
-    // 1. Get current user
-    const userRes = await fetch(`${STRAPI_URL}/users/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!userRes.ok) {
-      if (userRes.status === 401) {
-        localStorage.removeItem('strapi_token');
-        localStorage.removeItem('token');
-        localStorage.removeItem('jwt');
-        localStorage.removeItem('authToken');
-        router.push('/login');
-        return;
-      }
-      throw new Error(`Failed to fetch user (status ${userRes.status})`);
-    }
-    const userData = await userRes.json();
-    const email = userData.email;
-    setUserName(userData.username || email || 'Guest');
-    setUserEmail(email);
-    localStorage.setItem('userEmail', email);
-    localStorage.setItem('userName', userData.username || email || 'Guest');
-
-    // 2. Fetch bookings with populate=room.photos
-    const bookingsRes = await fetch(
-      `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=room.photos&sort=createdAt:desc`,
-      {
+  const fetchUserAndBookings = async (token: string) => {
+    setLoading(true);
+    try {
+      // 1. Get current user
+      const userRes = await fetch(`${STRAPI_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!userRes.ok) {
+        if (userRes.status === 401) {
+          localStorage.removeItem('strapi_token');
+          localStorage.removeItem('token');
+          localStorage.removeItem('jwt');
+          localStorage.removeItem('authToken');
+          router.push('/login');
+          return;
+        }
+        throw new Error(`Failed to fetch user (status ${userRes.status})`);
       }
-    );
-    if (!bookingsRes.ok) {
-      const errText = await bookingsRes.text();
-      throw new Error(`Failed to fetch bookings (${bookingsRes.status}): ${errText}`);
-    }
-    const data = await bookingsRes.json();
-    const bookingsData = data.data || [];
+      const userData = await userRes.json();
+      const email = userData.email;
+      setUserName(userData.username || email || 'Guest');
+      localStorage.setItem('userEmail', email);
+      localStorage.setItem('userName', userData.username || email || 'Guest');
 
-    // 3. Process bookings – room data is already included
-    const processedBookings = bookingsData.map((booking: any) => {
-      // If the room exists but photos might be nested, ensure it's an array
-      if (booking.room) {
-        // Ensure photos is an array (sometimes it's an object with 'data' key)
-        if (booking.room.photos && !Array.isArray(booking.room.photos)) {
+      // 2. Fetch bookings with populate=room.photos
+      const bookingsRes = await fetch(
+        `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=room.photos&sort=createdAt:desc`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!bookingsRes.ok) {
+        const errText = await bookingsRes.text();
+        throw new Error(`Failed to fetch bookings (${bookingsRes.status}): ${errText}`);
+      }
+      const data = await bookingsRes.json();
+      const bookingsData = data.data || [];
+
+      // 3. Ensure photos is always an array
+      const processed = bookingsData.map((booking: any) => {
+        if (booking.room && booking.room.photos && !Array.isArray(booking.room.photos)) {
           booking.room.photos = booking.room.photos.data || [];
         }
-      }
-      return booking;
-    });
+        return booking;
+      });
 
-    setBookings(processedBookings);
-  } catch (error: any) {
-    console.error('Error fetching dashboard data:', error);
-    showAlert(`Could not load dashboard data: ${error.message || 'Please try again.'}`, 'error');
-  } finally {
-    setLoading(false);
-  }
-};
+      setBookings(processed);
+    } catch (error: any) {
+      console.error('Error fetching dashboard data:', error);
+      showAlert(`Could not load dashboard data: ${error.message || 'Please try again.'}`, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('strapi_token');
@@ -172,15 +166,16 @@ export default function DashboardPage() {
     );
   };
 
+  // Helper: build image URL from a photo object
   const getImageUrl = (photo: any) => {
-  if (!photo) return null;
-  const url = photo?.url || photo?.attributes?.url;
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  const base = STRAPI_URL.replace('/api', '');
-  const path = url.startsWith('/') ? url : `/${url}`;
-  return `${base}${path}`;
-};
+    if (!photo) return null;
+    const url = photo?.url || photo?.attributes?.url;
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const base = STRAPI_URL.replace('/api', '');
+    const path = url.startsWith('/') ? url : `/${url}`;
+    return `${base}${path}`;
+  };
 
   const total = bookings.length;
   const pending = bookings.filter(
