@@ -52,9 +52,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NEXT_PUBLIC_STRAPI_URL=${{ secrets.NEXT_PUBLIC_STRAPI_URL }}
-            NEXT_PUBLIC_STRAPI_API_URL=${{ secrets.NEXT_PUBLIC_STRAPI_API_URL }}
-            STRAPI_URL=${{ secrets.STRAPI_URL }}
+            NEXT_PUBLIC_STRAPI_URL=https://api-hotel.qenenia.com
+            NEXT_PUBLIC_STRAPI_API_URL=https://api-hotel.qenenia.com/api
+            STRAPI_URL=https://api-hotel.qenenia.com
 
   deploy:
     needs: build

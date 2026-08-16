@@ -13,10 +13,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# NEXT_PUBLIC_* values are inlined at build time
-ARG NEXT_PUBLIC_STRAPI_URL
-ARG NEXT_PUBLIC_STRAPI_API_URL
-ARG STRAPI_URL
+# NEXT_PUBLIC_* values are inlined into the client bundle at build time
+ARG NEXT_PUBLIC_STRAPI_URL=https://api-hotel.qenenia.com
+ARG NEXT_PUBLIC_STRAPI_API_URL=https://api-hotel.qenenia.com/api
+ARG STRAPI_URL=https://api-hotel.qenenia.com
 ENV NEXT_PUBLIC_STRAPI_URL=$NEXT_PUBLIC_STRAPI_URL
 ENV NEXT_PUBLIC_STRAPI_API_URL=$NEXT_PUBLIC_STRAPI_API_URL
 ENV STRAPI_URL=$STRAPI_URL

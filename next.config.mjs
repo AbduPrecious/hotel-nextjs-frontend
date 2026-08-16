@@ -1,7 +1,12 @@
 /** @type {import('next').NextConfig} */
 
 function strapiUploadRemotePatterns() {
-  const candidates = [process.env.NEXT_PUBLIC_STRAPI_URL, process.env.STRAPI_URL, "http://localhost:3001"].filter(Boolean);
+  const candidates = [
+    process.env.NEXT_PUBLIC_STRAPI_URL,
+    process.env.STRAPI_URL,
+    "https://api-hotel.qenenia.com",
+    "http://localhost:3001",
+  ].filter(Boolean);
   const seen = new Set();
   const patterns = [];
   for (const raw of candidates) {
