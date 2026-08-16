@@ -51,7 +51,7 @@ export default function DashboardPage() {
   const fetchUserAndBookings = async (token: string) => {
     setLoading(true);
     try {
-      // 1. Get user
+      // 1. Get current user
       const userRes = await fetch(`${STRAPI_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -73,9 +73,10 @@ export default function DashboardPage() {
       localStorage.setItem('userEmail', email);
       localStorage.setItem('userName', userData.username || email || 'Guest');
 
-      // 2. Fetch bookings WITHOUT populate
+      // 2. Fetch bookings with populate=*
+      // This will include all relations: room, room.photos, etc.
       const bookingsRes = await fetch(
-        `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&sort=createdAt:desc`,
+        `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=*&sort=createdAt:desc`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -85,47 +86,7 @@ export default function DashboardPage() {
         throw new Error(`Failed to fetch bookings (${bookingsRes.status}): ${errText}`);
       }
       const data = await bookingsRes.json();
-      const bookingsData = data.data || [];
-
-      // 3. For each booking, fetch the full room data (including photos)
-      const enrichedBookings = await Promise.all(
-        bookingsData.map(async (booking: any) => {
-          const roomDocId = booking.room?.documentId || booking.room?.id;
-          if (!roomDocId) {
-            console.warn('Booking has no room:', booking.documentId);
-            return booking;
-          }
-
-          try {
-            const roomRes = await fetch(
-              `${STRAPI_URL}/rooms/${roomDocId}?populate=photos`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-            if (roomRes.ok) {
-              const roomData = await roomRes.json();
-              // Extract room attributes (Strapi v5 returns data directly)
-              const roomAttr = roomData.data?.attributes || roomData.data || {};
-              // Attach the full room data to the booking
-              booking.room = {
-                ...(booking.room || {}),
-                ...roomAttr,
-                documentId: roomDocId,
-                // Ensure photos is always an array
-                photos: roomAttr.photos || [],
-              };
-            } else {
-              console.warn(`Failed to fetch room ${roomDocId}:`, roomRes.status);
-            }
-          } catch (err) {
-            console.warn(`Error fetching room ${roomDocId}:`, err);
-          }
-          return booking;
-        })
-      );
-
-      setBookings(enrichedBookings);
+      setBookings(data.data || []);
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
       showAlert(`Could not load dashboard data: ${error.message || 'Please try again.'}`, 'error');
@@ -198,7 +159,7 @@ export default function DashboardPage() {
     );
   };
 
-  // Helper to get image URL
+  // Helper: get image URL from photo object
   const getImageUrl = (photo: any) => {
     if (!photo) return null;
     const url = photo?.url || photo?.attributes?.url || photo?.data?.attributes?.url;
@@ -249,7 +210,6 @@ export default function DashboardPage() {
     );
   }
 
-  // ─── Main render ──────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: BEIGE }}>
       <style>{`
@@ -556,7 +516,7 @@ export default function DashboardPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {bookings.map((booking) => {
                   const bData = booking.attributes || booking;
-                  const roomData = bData?.room || {};
+                  const roomData = bData?.room?.attributes || bData?.room || {};
                   const photos = roomData?.photos || [];
                   const firstPhoto = photos.length > 0 ? photos[0] : null;
                   const imgSrc = getImageUrl(firstPhoto);
