@@ -18,7 +18,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
-  
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const recentStaysRef = useRef<HTMLDivElement>(null);
@@ -31,33 +31,65 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const email = localStorage.getItem('userEmail');
-    if (!email) {
-      router.push('/login'); 
+    const token = localStorage.getItem('strapi_token');
+    if (!token) {
+      router.push('/login');
       return;
     }
-    setUserEmail(email);
-    const name = localStorage.getItem('userName') || 'Guest';
-    setUserName(name);
-    fetchBookings(email);
+    fetchUserAndBookings(token);
   }, [router]);
 
-  const fetchBookings = async (email: string) => {
+  // ─── Fetch user + their bookings ───────────────────────────────
+  const fetchUserAndBookings = async (token: string) => {
     setLoading(true);
     try {
-      const res = await fetch(
-        `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=room,room.photos&sort=createdAt:desc`
+      // 1. Get current user
+      const userRes = await fetch(`${STRAPI_URL}/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!userRes.ok) {
+        if (userRes.status === 401) {
+          localStorage.removeItem('strapi_token');
+          router.push('/login');
+          return;
+        }
+        throw new Error('Failed to fetch user');
+      }
+      const userData = await userRes.json();
+      setUserName(userData.username || userData.email || 'Guest');
+      setUserEmail(userData.email);
+      // (Optional) update localStorage for other pages
+      localStorage.setItem('userEmail', userData.email);
+      localStorage.setItem('userName', userData.username || userData.email || 'Guest');
+
+      // 2. Fetch bookings filtered by this user's ID
+      const bookingsRes = await fetch(
+        `${STRAPI_URL}/bookings?filters[user][id][$eq]=${userData.id}&populate=room,room.photos&sort=createdAt:desc`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
-      const data = await res.json();
+      if (!bookingsRes.ok) {
+        // If 403, maybe user lacks permission – but we'll treat as empty
+        if (bookingsRes.status === 403) {
+          setBookings([]);
+          return;
+        }
+        throw new Error('Failed to fetch bookings');
+      }
+      const data = await bookingsRes.json();
       setBookings(data.data || []);
     } catch (error) {
-      console.error('Failed to fetch bookings:', error);
+      console.error('Error fetching dashboard data:', error);
+      showAlert('Could not load dashboard data. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
+  // ─── Logout ─────────────────────────────────────────────────────
   const handleLogout = () => {
+    localStorage.removeItem('strapi_token');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
     router.push('/login');
@@ -90,9 +122,6 @@ export default function DashboardPage() {
         textColor = '#FFFFFF';
         break;
       case 'cancelled':
-        bgColor = '#E53E3E';
-        textColor = '#FFFFFF';
-        break;
       case 'rejected':
         bgColor = '#E53E3E';
         textColor = '#FFFFFF';
@@ -102,32 +131,59 @@ export default function DashboardPage() {
         textColor = '#FFFFFF';
     }
     return (
-      <span style={{
-        display: 'inline-block',
-        padding: '0.25rem 0.75rem',
-        borderRadius: '9999px',
-        fontSize: '0.65rem',
-        fontWeight: 700,
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        background: bgColor,
-        color: textColor,
-      }}>
+      <span
+        style={{
+          display: 'inline-block',
+          padding: '0.25rem 0.75rem',
+          borderRadius: '9999px',
+          fontSize: '0.65rem',
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          background: bgColor,
+          color: textColor,
+        }}
+      >
         {statusLower}
       </span>
     );
   };
 
   const total = bookings.length;
-  const pending = bookings.filter(b => (b.attributes?.booking_status || b.booking_status || '').toLowerCase() === 'pending').length;
-  const approved = bookings.filter(b => (b.attributes?.booking_status || b.booking_status || '').toLowerCase() === 'approved').length;
+  const pending = bookings.filter(
+    (b) => (b.attributes?.booking_status || b.booking_status || '').toLowerCase() === 'pending'
+  ).length;
+  const approved = bookings.filter(
+    (b) => (b.attributes?.booking_status || b.booking_status || '').toLowerCase() === 'approved'
+  ).length;
+  const rejected = total - pending - approved;
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BEIGE }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: BEIGE,
+        }}
+      >
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', border: '4px solid #C8A87C', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto', animation: 'spin 1s linear infinite' }}></div>
-          <p style={{ marginTop: '16px', color: '#666666', fontSize: '0.8rem' }}>Loading dashboard...</p>
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              border: '4px solid #C8A87C',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              margin: '0 auto',
+              animation: 'spin 1s linear infinite',
+            }}
+          ></div>
+          <p style={{ marginTop: '16px', color: '#666666', fontSize: '0.8rem' }}>
+            Loading dashboard...
+          </p>
         </div>
       </div>
     );
@@ -142,6 +198,7 @@ export default function DashboardPage() {
         }
       `}</style>
 
+      {/* ─── SIDEBAR ────────────────────────────────────────────── */}
       <aside
         className={`sidebar ${sidebarOpen ? 'open' : ''}`}
         style={{
@@ -162,13 +219,30 @@ export default function DashboardPage() {
         }}
       >
         <div style={{ padding: '1.5rem 1.5rem 1rem', borderBottom: '1px solid #E8E8E8' }}>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.25rem', fontWeight: 700, color: DARK_NAVY }}>
+          <h2
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              color: DARK_NAVY,
+            }}
+          >
             Dashboard
           </h2>
-          <p style={{ color: '#999', fontSize: '0.75rem', marginTop: '0.25rem' }}>Welcome back, {userName}</p>
+          <p style={{ color: '#999', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+            Welcome back, {userName}
+          </p>
         </div>
 
-        <nav style={{ flex: 1, padding: '1rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <nav
+          style={{
+            flex: 1,
+            padding: '1rem 1rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem',
+          }}
+        >
           <Link
             href="/dashboard"
             style={{
@@ -187,7 +261,7 @@ export default function DashboardPage() {
             <i className="fas fa-home" style={{ width: '20px', textAlign: 'center' }}></i>
             Overview
           </Link>
-          
+
           <div
             onClick={scrollToRecentStays}
             style={{
@@ -203,8 +277,12 @@ export default function DashboardPage() {
               cursor: 'pointer',
               transition: 'background 0.3s ease',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#F0F0F0'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#F8F8F8'; }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#F0F0F0';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#F8F8F8';
+            }}
           >
             <i className="fas fa-bed" style={{ width: '20px', textAlign: 'center' }}></i>
             My Stays
@@ -225,8 +303,12 @@ export default function DashboardPage() {
               cursor: 'pointer',
               transition: 'background 0.3s ease',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#F0F0F0'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#F8F8F8'; }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#F0F0F0';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#F8F8F8';
+            }}
           >
             <i className="fas fa-user" style={{ width: '20px', textAlign: 'center' }}></i>
             Profile
@@ -251,8 +333,12 @@ export default function DashboardPage() {
               cursor: 'pointer',
               transition: 'background 0.3s ease',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(229,62,62,0.05)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#F8F8F8'; }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(229,62,62,0.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#F8F8F8';
+            }}
           >
             <i className="fas fa-sign-out-alt" style={{ width: '20px', textAlign: 'center' }}></i>
             Log Out
@@ -260,6 +346,7 @@ export default function DashboardPage() {
         </div>
       </aside>
 
+      {/* ─── MOBILE OVERLAY ────────────────────────────────────── */}
       {isMobile && sidebarOpen && (
         <div
           style={{
@@ -272,39 +359,104 @@ export default function DashboardPage() {
         />
       )}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh', padding: isMobile ? '1rem' : '2rem' }}>
-        
+      {/* ─── MAIN CONTENT ──────────────────────────────────────── */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+          padding: isMobile ? '1rem' : '2rem',
+        }}
+      >
         {isMobile && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1.5rem',
+            }}
+          >
             <button
               onClick={() => setSidebarOpen(true)}
-              style={{ background: 'transparent', border: 'none', color: DARK_NAVY, cursor: 'pointer', padding: '0.25rem' }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: DARK_NAVY,
+                cursor: 'pointer',
+                padding: '0.25rem',
+              }}
             >
-              <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <svg
+                width="28"
+                height="28"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.2rem', color: DARK_NAVY }}>Dashboard</h3>
+            <h3
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: '1.2rem',
+                color: DARK_NAVY,
+              }}
+            >
+              Dashboard
+            </h3>
           </div>
         )}
 
         <div style={{ maxWidth: '1180px', margin: '0 auto', width: '100%' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
+          {/* ─── STAT CARDS ──────────────────────────────────────── */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gap: '1rem',
+              marginBottom: '2.5rem',
+            }}
+          >
             {[
               { label: 'Total Bookings', value: total },
               { label: 'Pending', value: pending },
               { label: 'Approved', value: approved },
-              { label: 'Rejected', value: total - pending - approved },
+              { label: 'Rejected', value: rejected },
             ].map((stat, idx) => (
-              <div key={idx} style={{ background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: '1rem', padding: '1rem', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
-                <p style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#999', marginBottom: '0.25rem' }}>
+              <div
+                key={idx}
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid #E8E8E8',
+                  borderRadius: '1rem',
+                  padding: '1rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: '0.65rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: '#999',
+                    marginBottom: '0.25rem',
+                  }}
+                >
                   {stat.label}
                 </p>
-                <div style={{ fontSize: '1.8rem', fontWeight: 700, color: DARK_NAVY }}>{stat.value}</div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 700, color: DARK_NAVY }}>
+                  {stat.value}
+                </div>
               </div>
             ))}
           </div>
 
+          {/* ─── RECENT STAYS ────────────────────────────────────── */}
           <div
             ref={recentStaysRef}
             style={{
@@ -315,36 +467,110 @@ export default function DashboardPage() {
               boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
             }}
           >
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3
+              style={{
+                fontSize: '1.2rem',
+                fontWeight: 600,
+                color: DARK_NAVY,
+                marginBottom: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+            >
               My Recent Stays
-              <span style={{ fontSize: '0.7rem', background: GOLD, color: DARK_NAVY, padding: '0.1rem 0.5rem', borderRadius: '9999px', fontWeight: 700 }}>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  background: GOLD,
+                  color: DARK_NAVY,
+                  padding: '0.1rem 0.5rem',
+                  borderRadius: '9999px',
+                  fontWeight: 700,
+                }}
+              >
                 {bookings.length}
               </span>
             </h3>
 
             {bookings.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {bookings.map((booking, idx) => {
+                {bookings.map((booking) => {
                   const bData = booking.attributes || booking;
                   const roomData = bData?.room?.attributes || bData?.room || {};
                   const imageUrl = roomData?.photos?.[0]?.url || '/placeholder-room.jpg';
-                  const imgSrc = imageUrl.startsWith('http') ? imageUrl : `${process.env.NEXT_PUBLIC_STRAPI_API_URL?.replace('/api', '') || 'http://localhost:1337'}${imageUrl}`;
+                  // Build correct image URL
+                  const baseUrl = STRAPI_URL.replace('/api', ''); // remove /api
+                  const imgSrc = imageUrl.startsWith('http')
+                    ? imageUrl
+                    : `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
 
                   return (
-                    <div key={booking.documentId || booking.id} style={{ display: 'flex', flexDirection: 'row', gap: '1rem', alignItems: 'center', padding: '1rem', background: '#F8F8F8', borderRadius: '1rem', border: '1px solid #E8E8E8' }}>
-                      <div style={{ width: '100px', height: '70px', borderRadius: '0.5rem', overflow: 'hidden', background: '#E0E0E0', flexShrink: 0 }}>
-                        <img src={imgSrc} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div
+                      key={booking.documentId || booking.id}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        gap: '1rem',
+                        alignItems: 'center',
+                        padding: '1rem',
+                        background: '#F8F8F8',
+                        borderRadius: '1rem',
+                        border: '1px solid #E8E8E8',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '100px',
+                          height: '70px',
+                          borderRadius: '0.5rem',
+                          overflow: 'hidden',
+                          background: '#E0E0E0',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <img
+                          src={imgSrc}
+                          alt="Room"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '0.5rem',
+                          }}
+                        >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                             <BedIcon size={18} color="#555" />
-                            <Link href={`/dashboard/bookings/${booking.documentId || booking.id}`} style={{ fontSize: '1.1rem', fontWeight: 600, color: DARK_NAVY, textDecoration: 'none', transition: 'color 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.color = GOLD} onMouseLeave={(e) => e.currentTarget.style.color = DARK_NAVY}>
+                            <Link
+                              href={`/dashboard/bookings/${booking.documentId || booking.id}`}
+                              style={{
+                                fontSize: '1.1rem',
+                                fontWeight: 600,
+                                color: DARK_NAVY,
+                                textDecoration: 'none',
+                                transition: 'color 0.3s ease',
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.color = GOLD)}
+                              onMouseLeave={(e) => (e.currentTarget.style.color = DARK_NAVY)}
+                            >
                               {roomData?.title || 'Room'}
                             </Link>
                           </div>
-                          
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.75rem',
+                              flexWrap: 'wrap',
+                            }}
+                          >
                             {getStatusBadge(bData?.booking_status)}
                             <Link
                               href={`/dashboard/bookings/${booking.documentId || booking.id}`}
@@ -358,7 +584,7 @@ export default function DashboardPage() {
                                 color: '#FFFFFF',
                                 borderRadius: '9999px',
                                 textDecoration: 'none',
-                                transition: 'all 0.3s ease'
+                                transition: 'all 0.3s ease',
                               }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.background = GOLD;
@@ -376,18 +602,58 @@ export default function DashboardPage() {
                           </div>
                         </div>
 
-                        <div style={{ fontSize: '0.85rem', color: '#555555', marginTop: '0.25rem' }}>
-                          <span> {formatDate(bData?.check_in)} – {formatDate(bData?.check_out)}</span>
-                          <span style={{ marginLeft: '1rem' }}> <strong style={{ color: GOLD }}>ETB {bData?.total}</strong></span>
+                        <div
+                          style={{
+                            fontSize: '0.85rem',
+                            color: '#555555',
+                            marginTop: '0.25rem',
+                          }}
+                        >
+                          <span>
+                            {formatDate(bData?.check_in)} – {formatDate(bData?.check_out)}
+                          </span>
+                          <span style={{ marginLeft: '1rem' }}>
+                            {' '}
+                            <strong style={{ color: GOLD }}>ETB {bData?.total}</strong>
+                          </span>
                         </div>
 
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem 1.25rem', marginTop: '0.25rem', alignItems: 'center' }}>
-                          <p style={{ fontSize: '0.75rem', color: '#999', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '0.75rem 1.25rem',
+                            marginTop: '0.25rem',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <p
+                            style={{
+                              fontSize: '0.75rem',
+                              color: '#999',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                              margin: 0,
+                            }}
+                          >
                             <GuestIcon size={18} color="#555" />
                             {bData?.name}
                           </p>
-                          <p style={{ fontSize: '0.75rem', color: '#999', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
-                            <i className="fas fa-envelope" style={{ color: '#555', fontSize: '0.9rem', width: '18px', textAlign: 'center' }}></i>
+                          <p
+                            style={{
+                              fontSize: '0.75rem',
+                              color: '#999',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                              margin: 0,
+                            }}
+                          >
+                            <i
+                              className="fas fa-envelope"
+                              style={{ color: '#555', fontSize: '0.9rem', width: '18px', textAlign: 'center' }}
+                            ></i>
                             {bData?.email || 'N/A'}
                           </p>
                         </div>
@@ -398,8 +664,31 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-                <p style={{ color: '#999', fontSize: '0.9rem' }}>You haven't made any bookings yet.</p>
-                <Link href="/rooms" style={{ display: 'inline-block', marginTop: '1rem', background: DARK_NAVY, color: '#FFFFFF', padding: '0.5rem 1.5rem', borderRadius: '9999px', textDecoration: 'none', fontSize: '0.75rem', transition: 'background 0.3s ease' }} onMouseEnter={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = DARK_NAVY; }} onMouseLeave={(e) => { e.currentTarget.style.background = DARK_NAVY; e.currentTarget.style.color = '#FFFFFF'; }}>
+                <p style={{ color: '#999', fontSize: '0.9rem' }}>
+                  You haven't made any bookings yet.
+                </p>
+                <Link
+                  href="/rooms"
+                  style={{
+                    display: 'inline-block',
+                    marginTop: '1rem',
+                    background: DARK_NAVY,
+                    color: '#FFFFFF',
+                    padding: '0.5rem 1.5rem',
+                    borderRadius: '9999px',
+                    textDecoration: 'none',
+                    fontSize: '0.75rem',
+                    transition: 'background 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = GOLD;
+                    e.currentTarget.style.color = DARK_NAVY;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = DARK_NAVY;
+                    e.currentTarget.style.color = '#FFFFFF';
+                  }}
+                >
                   Browse Available Rooms
                 </Link>
               </div>

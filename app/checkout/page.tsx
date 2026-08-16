@@ -115,7 +115,7 @@ function CheckoutContent() {
 
   const { nights, total } = calculateDetails();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setSubmitting(true);
 
@@ -134,11 +134,31 @@ function CheckoutContent() {
     return;
   }
 
-  const bookingData = {
+  // ─── 1. Get logged‑in user ID (if any) ──────────────────
+  let userId = null;
+  try {
+    const token = localStorage.getItem('token'); // adjust if you store it differently
+    if (token) {
+      const userRes = await fetch(`${STRAPI_URL}/api/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        userId = userData.id; // Strapi user primary key (numeric or string)
+      } else {
+        console.warn('User not authenticated, booking will be unassigned.');
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch user:', error);
+  }
+
+  // ─── 2. Prepare booking data ────────────────────────────
+  const bookingData: any = {
     name: formData.name,
     email: formData.email,
     phone: formData.phone,
-    room: room.documentId,
+    room: room.documentId,      // room relation uses documentId
     check_in: checkInParam,
     check_out: checkOutParam,
     total: Number(total),
@@ -146,8 +166,13 @@ function CheckoutContent() {
     payment_method: paymentMethod,
   };
 
+  // If the user is logged in, link the booking to them
+  if (userId) {
+    bookingData.user = userId;  // field name must match your Booking content‑type relation
+  }
+
   try {
-    // 1. Create the booking
+    // ─── 3. Create the booking ─────────────────────────────
     const res = await fetch(`${STRAPI_URL}/api/bookings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -164,14 +189,13 @@ function CheckoutContent() {
     const docId = responseData?.data?.documentId;
     if (!docId) throw new Error('No documentId returned from Strapi');
 
-    // 2. If bank transfer, upload the screenshot
+    // ─── 4. Upload screenshot (if bank transfer) ──────────
     if (paymentMethod === 'bank_transfer' && formData.screenshot) {
       const fileFormData = new FormData();
-      fileFormData.append('files', formData.screenshot); // field name must be 'files'
+      fileFormData.append('files', formData.screenshot);
 
       const uploadRes = await fetch(`${STRAPI_URL}/api/upload`, {
         method: 'POST',
-        // ⚠️ DO NOT set Content-Type – browser sets it for FormData
         body: fileFormData,
       });
 
@@ -185,11 +209,8 @@ function CheckoutContent() {
       const fileId = uploadData[0]?.id;
       if (!fileId) throw new Error('No file id returned from upload');
 
-      // 3. Attach the file to the booking
-      //    The field name must match your Strapi content-type field.
-      //    If it's not 'screenshot', change it below.
+      // ─── 5. Attach screenshot to the booking ─────────────
       const updatePayload = { data: { screenshot: fileId } };
-
       const updateRes = await fetch(`${STRAPI_URL}/api/bookings/${docId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -199,12 +220,11 @@ function CheckoutContent() {
       if (!updateRes.ok) {
         const errText = await updateRes.text();
         console.error('❌ Update error:', errText);
-        // Don't throw – we already have the booking, but let user know
         showAlert('Booking created, but screenshot attachment failed. Please contact support.', 'warning');
       }
     }
 
-    // 4. Redirect to confirmation
+    // ─── 6. Redirect to confirmation ────────────────────────
     const params = new URLSearchParams({
       name: formData.name,
       email: formData.email,
