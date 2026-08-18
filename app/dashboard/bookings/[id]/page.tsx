@@ -287,47 +287,335 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         }
       `}</style>
 
-      {/* ─── HERO ─── */}
-      <div className="contact-hero animate-in" style={{ padding: isMobile ? '4rem 1rem' : '5rem 1rem' }}>
-        <div className="breadcrumb">
-          <Link href="/">Home</Link>
-          <span>/</span>
-          <Link href="/dashboard">Dashboard</Link>
-          <span>/</span>
-          <span style={{ color: '#FFFFFF' }}>Booking Details</span>
-        </div>
-        <h1>{roomTitle}</h1>
+     {/* ─── HERO (Fully Responsive) ─── */}
+<ScrollReveal delay={0}>
+  <section
+    style={{
+      position: 'relative',
+      height: isMobile ? '85vh' : '100vh',
+      minHeight: isMobile ? '400px' : '600px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: isMobile ? '0 0.75rem' : '0 1rem',
+      overflow: 'hidden',
+      background: '#FFFFFF',
+    }}
+  >
+    {/* Dynamic Media Background */}
+    {mediaList.length > 0 ? (
+      <>
+        {mediaList.map((media, idx) => {
+          const mediaUrl = getMediaUrl(media);
+          return (
+            <div
+              key={idx}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: idx === mediaIndex ? 1 : 0,
+                opacity: idx === mediaIndex ? 1 : 0,
+                transition: 'opacity 1.2s ease-in-out',
+              }}
+            >
+              {isVideo(media) ? (
+                <video
+                  src={mediaUrl}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    filter: 'brightness(1.2)',
+                  }}
+                />
+              ) : mediaUrl ? (
+                <img
+                  src={mediaUrl}
+                  alt={`${hotelName} - slide ${idx + 1}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    transform: `translateY(${offsetY * 0.15}px)`,
+                    filter: 'brightness(1.2)',
+                  }}
+                />
+              ) : null}
+            </div>
+          );
+        })}
         <div
           style={{
-            fontSize: isMobile ? '0.75rem' : '0.9rem',
-            color: 'rgba(255,255,255,0.7)',
-            letterSpacing: '0.05em',
+            position: 'absolute',
+            inset: 0,
+            zIndex: 2,
+            background: 'rgba(0,0,0,0.4)',
+          }}
+        />
+      </>
+    ) : (
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+          background: '#1A1A1A',
+        }}
+      />
+    )}
+
+    {/* Hero Navigation Buttons */}
+    {mediaList.length > 1 && (
+      <div
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          top: 0,
+          left: 0,
+          zIndex: 20,
+          pointerEvents: 'none',
+        }}
+      >
+        <button
+          onClick={handlePrevMedia}
+          style={{
+            pointerEvents: 'auto',
+            position: 'absolute',
+            left: isMobile ? '0.5rem' : '1.5rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'rgba(0, 0, 0, 0.3)',
+            backdropFilter: 'blur(4px)',
+            border: '2px solid rgba(255, 255, 255, 0.8)',
+            color: '#FFFFFF',
+            width: isMobile ? '36px' : '48px',
+            height: isMobile ? '36px' : '48px',
+            borderRadius: '50%',
             display: 'flex',
-            flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.5rem',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            fontSize: isMobile ? '1rem' : '1.2rem',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)';
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)';
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
           }}
         >
-          {booking?.check_in && booking?.check_out ? (
-            <>
-              <span>Check‑in: {new Date(booking.check_in).toLocaleDateString()}</span>
-              <span>|</span>
-              <span>Check‑out: {new Date(booking.check_out).toLocaleDateString()}</span>
-              <span style={{ color: 'rgba(255,255,255,0.3)' }}>•</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                <GuestIcon size={16} color="rgba(255,255,255,0.7)" /> {capacity} Guests
-              </span>
-              <span style={{ color: 'rgba(255,255,255,0.3)' }}>•</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                <BedIcon size={16} color="rgba(255,255,255,0.7)" /> {bedType}
-              </span>
-            </>
-          ) : (
-            'Booking details'
-          )}
-        </div>
+          <svg
+            width={isMobile ? '18' : '24'}
+            height={isMobile ? '18' : '24'}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button
+          onClick={handleNextMedia}
+          style={{
+            pointerEvents: 'auto',
+            position: 'absolute',
+            right: isMobile ? '0.5rem' : '1.5rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'rgba(0, 0, 0, 0.3)',
+            backdropFilter: 'blur(4px)',
+            border: '2px solid rgba(255, 255, 255, 0.8)',
+            color: '#FFFFFF',
+            width: isMobile ? '36px' : '48px',
+            height: isMobile ? '36px' : '48px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            fontSize: isMobile ? '1rem' : '1.2rem',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)';
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)';
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+          }}
+        >
+          <svg
+            width={isMobile ? '18' : '24'}
+            height={isMobile ? '18' : '24'}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
+    )}
+
+    {/* ─── Hero Content ────────────────────────────────────────── */}
+    <div
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        maxWidth: isMobile ? '100%' : '896px',
+        margin: '0 auto',
+        textAlign: 'center',
+        padding: isMobile ? '0 0.5rem' : '0 1rem',
+        width: '100%',
+      }}
+    >
+      <h1
+        style={{
+          fontSize: isMobile
+            ? 'clamp(1.5rem, 6vw, 2.2rem)'
+            : 'clamp(2rem, 3.5vw, 2.5rem)',
+          fontWeight: 'bold',
+          color: '#FFFFFF',
+          marginBottom: isMobile ? '0.75rem' : '1rem',
+          textShadow: '0 2px 30px rgba(0,0,0,0.5)',
+          lineHeight: '1.2',
+        }}
+      >
+        {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
+      </h1>
+      <p
+        style={{
+          fontSize: isMobile
+            ? 'clamp(0.75rem, 2.5vw, 0.9rem)'
+            : 'clamp(0.85rem, 1.2vw, 0.95rem)',
+          color: '#FFFFFF',
+          marginBottom: isMobile ? '1.5rem' : '2rem',
+          maxWidth: isMobile ? '100%' : '672px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          lineHeight: '1.625',
+          textShadow: '0 2px 20px rgba(0,0,0,0.4)',
+          padding: isMobile ? '0 0.5rem' : '0',
+        }}
+      >
+        Welcome to {hotelName}, where comfort meets elegance.
+      </p>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: 'center',
+          gap: isMobile ? '0.75rem' : '1rem',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+          width: '100%',
+        }}
+      >
+        <a
+          href="#rooms"
+          style={{
+            background: 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 100%)',
+            color: '#1A1A1A',
+            fontWeight: 600,
+            padding: isMobile
+              ? '0.6rem 1.25rem'
+              : '0.75rem 2rem',
+            borderRadius: '9999px',
+            border: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            cursor: 'pointer',
+            fontSize: isMobile
+              ? 'clamp(0.7rem, 2vw, 0.8rem)'
+              : '0.875rem',
+            transition: 'all 0.3s ease',
+            textDecoration: 'none',
+            width: isMobile ? '100%' : 'auto',
+            justifyContent: 'center',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 10px 40px rgba(200,168,124,0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
+          Explore Rooms
+          <svg
+            style={{ width: '1rem', height: '1rem' }}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </a>
+        <Link
+          href="/rooms"
+          style={{
+            border: '2px solid #FFFFFF',
+            color: '#FFFFFF',
+            fontWeight: 600,
+            padding: isMobile
+              ? '0.6rem 1.25rem'
+              : '0.75rem 2rem',
+            borderRadius: '9999px',
+            background: 'transparent',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            cursor: 'pointer',
+            fontSize: isMobile
+              ? 'clamp(0.7rem, 2vw, 0.8rem)'
+              : '0.875rem',
+            transition: 'all 0.3s ease',
+            textDecoration: 'none',
+            width: isMobile ? '100%' : 'auto',
+            justifyContent: 'center',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#FFFFFF';
+            e.currentTarget.style.color = '#1A1A1A';
+            e.currentTarget.style.transform = 'scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 10px 40px rgba(255,255,255,0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = '#FFFFFF';
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
+          Book Now
+          <svg
+            style={{ width: '1rem', height: '1rem' }}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </Link>
+      </div>
+    </div>
+  </section>
+</ScrollReveal>
 
       {/* ─── MAIN CONTENT ─── */}
       <div style={{ minHeight: '70vh', padding: '2rem 1rem' }}>
