@@ -468,38 +468,202 @@ export default function Home() {
         </section>
       </ScrollReveal>
 
-      {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
-      <ScrollReveal delay={200}>
-        <section style={{ position: 'relative', zIndex: 30, marginTop: isMobile ? '-20px' : '-50px', padding: '0 1rem', maxWidth: '1180px', margin: isMobile ? '-20px 1rem 2rem' : '-50px auto 3rem' }}>
-          <form onSubmit={handleSearchAvailability} style={{ backgroundColor: '#FFFFFF', boxShadow: '0 15px 35px rgba(0,0,0,0.2)', padding: isMobile ? '1rem' : '1.75rem 2rem', borderBottom: '3px solid #17232E' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))', gap: isMobile ? '1rem' : '1.5rem', alignItems: 'end' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ fontSize: '0.72rem', letterSpacing: '0.15em', fontWeight: 600, color: '#777777', textTransform: 'uppercase', marginBottom: '0.5rem' }}>CHECK - IN</label>
-                <input type="date" className="carmelina-input" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} style={{ border: 'none', borderBottom: '1px solid #DDDDDD', padding: '0.5rem 0', fontSize: '1rem', color: '#111111', outline: 'none', background: 'transparent' }} required />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ fontSize: '0.72rem', letterSpacing: '0.15em', fontWeight: 600, color: '#777777', textTransform: 'uppercase', marginBottom: '0.5rem' }}>CHECK - OUT</label>
-                <input type="date" className="carmelina-input" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} style={{ border: 'none', borderBottom: '1px solid #DDDDDD', padding: '0.5rem 0', fontSize: '1rem', color: '#111111', outline: 'none', background: 'transparent' }} required />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ fontSize: '0.72rem', letterSpacing: '0.15em', fontWeight: 600, color: '#777777', textTransform: 'uppercase', marginBottom: '0.5rem' }}>GUESTS</label>
-                <select value={adults} onChange={(e) => setAdults(Number(e.target.value))} style={{ border: 'none', borderBottom: '1px solid #DDDDDD', padding: '0.5rem 0', fontSize: '1rem', color: '#111111', outline: 'none', background: 'transparent', cursor: 'pointer' }}>
-                  {[1, 2, 3, 4, 5, 6].map((num) => (<option key={num} value={num}>{num}</option>))}
-                </select>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ fontSize: '0.72rem', letterSpacing: '0.15em', fontWeight: 600, color: '#777777', textTransform: 'uppercase', marginBottom: '0.5rem' }}>CHILDREN</label>
-                <select value={children} onChange={(e) => setChildren(Number(e.target.value))} style={{ border: 'none', borderBottom: '1px solid #DDDDDD', padding: '0.5rem 0', fontSize: '1rem', color: '#111111', outline: 'none', background: 'transparent', cursor: 'pointer' }}>
-                  {[0, 1, 2, 3, 4].map((num) => (<option key={num} value={num}>{num}</option>))}
-                </select>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gridColumn: isMobile ? '1 / -1' : 'span 1' }}>
-                <button type="submit" style={{ backgroundColor: '#17232E', color: '#FFFFFF', padding: '0.85rem 1.25rem', border: 'none', fontSize: '0.75rem', letterSpacing: '0.18em', fontWeight: 600, textTransform: 'uppercase', cursor: 'pointer', transition: 'background-color 0.3s ease', width: '100%' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#B69B78'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#17232E'; }}>CHECK AVAILABILITY</button>
-              </div>
-            </div>
-          </form>
-        </section>
-      </ScrollReveal>
+     {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
+<ScrollReveal delay={200}>
+  <section
+    style={{
+      position: 'relative',
+      zIndex: 30,
+      marginTop: isMobile ? '-20px' : '-50px',
+      padding: isMobile ? '0 1rem' : '0 1rem',
+      maxWidth: '1180px',
+      margin: isMobile ? '-20px 1rem 2rem' : '-50px auto 3rem',
+      background: '#FFFFFF', // ← White background for the whole section
+      borderRadius: '4px',   // optional: slight rounding
+      boxShadow: '0 15px 35px rgba(0,0,0,0.2)', // moved shadow to section
+    }}
+  >
+    <form
+      onSubmit={handleSearchAvailability}
+      style={{
+        backgroundColor: '#FFFFFF',
+        padding: isMobile ? '1rem' : '1.75rem 2rem',
+        borderBottom: '3px solid #17232E',
+        borderRadius: '4px', // optional, matches section
+      }}
+    >
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: isMobile ? '1rem' : '1.5rem',
+          alignItems: 'end',
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <label
+            style={{
+              fontSize: '0.72rem',
+              letterSpacing: '0.15em',
+              fontWeight: 600,
+              color: '#777777',
+              textTransform: 'uppercase',
+              marginBottom: '0.5rem',
+            }}
+          >
+            CHECK - IN
+          </label>
+          <input
+            type="date"
+            className="carmelina-input"
+            value={checkIn}
+            onChange={(e) => setCheckIn(e.target.value)}
+            style={{
+              border: 'none',
+              borderBottom: '1px solid #DDDDDD',
+              padding: '0.5rem 0',
+              fontSize: '1rem',
+              color: '#111111',
+              outline: 'none',
+              background: 'transparent',
+            }}
+            required
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <label
+            style={{
+              fontSize: '0.72rem',
+              letterSpacing: '0.15em',
+              fontWeight: 600,
+              color: '#777777',
+              textTransform: 'uppercase',
+              marginBottom: '0.5rem',
+            }}
+          >
+            CHECK - OUT
+          </label>
+          <input
+            type="date"
+            className="carmelina-input"
+            value={checkOut}
+            onChange={(e) => setCheckOut(e.target.value)}
+            style={{
+              border: 'none',
+              borderBottom: '1px solid #DDDDDD',
+              padding: '0.5rem 0',
+              fontSize: '1rem',
+              color: '#111111',
+              outline: 'none',
+              background: 'transparent',
+            }}
+            required
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <label
+            style={{
+              fontSize: '0.72rem',
+              letterSpacing: '0.15em',
+              fontWeight: 600,
+              color: '#777777',
+              textTransform: 'uppercase',
+              marginBottom: '0.5rem',
+            }}
+          >
+            GUESTS
+          </label>
+          <select
+            value={adults}
+            onChange={(e) => setAdults(Number(e.target.value))}
+            style={{
+              border: 'none',
+              borderBottom: '1px solid #DDDDDD',
+              padding: '0.5rem 0',
+              fontSize: '1rem',
+              color: '#111111',
+              outline: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+            }}
+          >
+            {[1, 2, 3, 4, 5, 6].map((num) => (
+              <option key={num} value={num}>
+                {num}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <label
+            style={{
+              fontSize: '0.72rem',
+              letterSpacing: '0.15em',
+              fontWeight: 600,
+              color: '#777777',
+              textTransform: 'uppercase',
+              marginBottom: '0.5rem',
+            }}
+          >
+            CHILDREN
+          </label>
+          <select
+            value={children}
+            onChange={(e) => setChildren(Number(e.target.value))}
+            style={{
+              border: 'none',
+              borderBottom: '1px solid #DDDDDD',
+              padding: '0.5rem 0',
+              fontSize: '1rem',
+              color: '#111111',
+              outline: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+            }}
+          >
+            {[0, 1, 2, 3, 4].map((num) => (
+              <option key={num} value={num}>
+                {num}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gridColumn: isMobile ? '1 / -1' : 'span 1',
+          }}
+        >
+          <button
+            type="submit"
+            style={{
+              backgroundColor: '#17232E',
+              color: '#FFFFFF',
+              padding: '0.85rem 1.25rem',
+              border: 'none',
+              fontSize: '0.75rem',
+              letterSpacing: '0.18em',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              transition: 'background-color 0.3s ease',
+              width: '100%',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#B69B78';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#17232E';
+            }}
+          >
+            CHECK AVAILABILITY
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+</ScrollReveal>
 
       {/* ─── ABOUT (HomeWelcome) ─── */}
       {homeWelcome && (
