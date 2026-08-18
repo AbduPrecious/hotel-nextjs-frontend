@@ -104,14 +104,23 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const getImageUrl = (photo: any) => {
-    if (!photo) return null;
-    const url = photo?.url || photo?.attributes?.url || photo?.data?.attributes?.url;
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const base = STRAPI_URL.endsWith('/') ? STRAPI_URL.slice(0, -1) : STRAPI_URL;
-    const path = url.startsWith('/') ? url : `/${url}`;
-    return `${base}${path}`;
-  };
+  if (!photo) return null;
+  
+  // Extract the URL from various possible structures
+  const url = photo?.url || photo?.attributes?.url || photo?.data?.attributes?.url;
+  if (!url) return null;
+  
+  // If it's already a full URL, return it as-is
+  if (url.startsWith('http')) return url;
+  
+  // Build the full URL using the Strapi backend domain
+  // STRAPI_URL is already set to the base domain (without /api)
+  const base = STRAPI_URL.endsWith('/') ? STRAPI_URL.slice(0, -1) : STRAPI_URL;
+  const path = url.startsWith('/') ? url : `/${url}`;
+  
+  // Return the correctly constructed URL
+  return `${base}${path}`;
+};
 
   const photos = booking?.room?.photos || [];
   const currentPhoto = photos.length > 0 ? photos[currentPhotoIndex] : null;
