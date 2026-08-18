@@ -50,7 +50,6 @@ export default function DashboardPage() {
   const fetchUserAndBookings = async (token: string) => {
     setLoading(true);
     try {
-      // 1. Get current user
       const userRes = await fetch(`${STRAPI_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -71,7 +70,6 @@ export default function DashboardPage() {
       localStorage.setItem('userEmail', email);
       localStorage.setItem('userName', userData.username || email || 'Guest');
 
-      // 2. Fetch bookings with populate=room.photos
       const bookingsRes = await fetch(
         `${STRAPI_URL}/bookings?filters[email][$eqi]=${encodeURIComponent(email)}&populate=room.photos&sort=createdAt:desc`,
         {
@@ -85,7 +83,6 @@ export default function DashboardPage() {
       const data = await bookingsRes.json();
       const bookingsData = data.data || [];
 
-      // 3. Ensure photos is always an array
       const processed = bookingsData.map((booking: any) => {
         if (booking.room && booking.room.photos && !Array.isArray(booking.room.photos)) {
           booking.room.photos = booking.room.photos.data || [];
@@ -135,12 +132,12 @@ export default function DashboardPage() {
     let bgColor, textColor;
     switch (statusLower) {
       case 'approved':
-        bgColor = '#28A745';
+        bgColor = '#22C55E';
         textColor = '#FFFFFF';
         break;
       case 'cancelled':
       case 'rejected':
-        bgColor = '#E53E3E';
+        bgColor = '#EF4444';
         textColor = '#FFFFFF';
         break;
       default:
@@ -166,21 +163,15 @@ export default function DashboardPage() {
     );
   };
 
- const getImageUrl = (photo: any) => {
-  if (!photo) return null;
-  
-  // Try different possible structures
-  const url = photo?.url || photo?.attributes?.url || photo?.data?.attributes?.url;
-  if (!url) return null;
-  
-  // If it's already a full URL, return it
-  if (url.startsWith('http')) return url;
-  
-  // Build the full URL using the API base (without /api)
-  const base = 'https://api-hotel.qenenia.com'; // Hardcoded for now – or use env
-  const path = url.startsWith('/') ? url : `/${url}`;
-  return `${base}${path}`;
-};
+  const getImageUrl = (photo: any) => {
+    if (!photo) return null;
+    const url = photo?.url || photo?.attributes?.url || photo?.data?.attributes?.url;
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const base = 'https://api-hotel.qenenia.com';
+    const path = url.startsWith('/') ? url : `/${url}`;
+    return `${base}${path}`;
+  };
 
   const total = bookings.length;
   const pending = bookings.filter(
@@ -190,6 +181,14 @@ export default function DashboardPage() {
     (b) => (b.attributes?.booking_status || b.booking_status || '').toLowerCase() === 'approved'
   ).length;
   const rejected = total - pending - approved;
+
+  // ─── Stat card config with colors ─────────────────────────────
+  const stats = [
+    { label: 'Total Bookings', value: total, color: DARK_NAVY, icon: '📊' },
+    { label: 'Pending', value: pending, color: '#F59E0B', icon: '⏳' },
+    { label: 'Approved', value: approved, color: '#22C55E', icon: '✅' },
+    { label: 'Rejected', value: rejected, color: '#EF4444', icon: '❌' },
+  ];
 
   if (loading) {
     return (
@@ -228,6 +227,24 @@ export default function DashboardPage() {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .stat-card {
+          animation: fadeInUp 0.6s ease forwards;
+          opacity: 0;
+        }
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+        .stat-number {
+          transition: all 0.3s ease;
+        }
+        .stat-number:hover {
+          transform: scale(1.1);
         }
       `}</style>
 
@@ -443,51 +460,69 @@ export default function DashboardPage() {
         )}
 
         <div style={{ maxWidth: '1180px', margin: '0 auto', width: '100%' }}>
-          {/* Stats */}
+          {/* ─── STAT CARDS (Animated + Colored) ────────────────── */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
               gap: '1rem',
               marginBottom: '2.5rem',
             }}
           >
-            {[
-              { label: 'Total Bookings', value: total },
-              { label: 'Pending', value: pending },
-              { label: 'Approved', value: approved },
-              { label: 'Rejected', value: rejected },
-            ].map((stat, idx) => (
+            {stats.map((stat, idx) => (
               <div
                 key={idx}
+                className="stat-card"
                 style={{
                   background: '#FFFFFF',
-                  border: '1px solid #E8E8E8',
+                  border: `1px solid ${stat.color}33`,
                   borderRadius: '1rem',
-                  padding: '1rem',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                  padding: '1.25rem',
+                  boxShadow: `0 4px 20px ${stat.color}15`,
+                  borderTop: `4px solid ${stat.color}`,
+                  transition: 'all 0.3s ease',
+                  cursor: 'default',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = `0 8px 30px ${stat.color}25`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = `0 4px 20px ${stat.color}15`;
                 }}
               >
-                <p
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                  <span style={{ fontSize: '1.2rem' }}>{stat.icon}</span>
+                  <p
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      color: '#999',
+                      margin: 0,
+                    }}
+                  >
+                    {stat.label}
+                  </p>
+                </div>
+                <div
+                  className="stat-number"
                   style={{
-                    fontSize: '0.65rem',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    color: '#999',
-                    marginBottom: '0.25rem',
+                    fontSize: '2.2rem',
+                    fontWeight: 700,
+                    color: stat.color,
+                    lineHeight: 1.2,
                   }}
                 >
-                  {stat.label}
-                </p>
-                <div style={{ fontSize: '1.8rem', fontWeight: 700, color: DARK_NAVY }}>
                   {stat.value}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Recent Stays */}
+          {/* ─── RECENT STAYS ────────────────────────────────────── */}
           <div
             ref={recentStaysRef}
             style={{
@@ -538,19 +573,29 @@ export default function DashboardPage() {
                       key={booking.documentId || booking.id}
                       style={{
                         display: 'flex',
-                        flexDirection: 'row',
+                        flexDirection: isMobile ? 'column' : 'row',
                         gap: '1rem',
-                        alignItems: 'center',
-                        padding: '1rem',
+                        alignItems: isMobile ? 'stretch' : 'center',
+                        padding: '1.25rem',
                         background: '#F8F8F8',
                         borderRadius: '1rem',
                         border: '1px solid #E8E8E8',
+                        transition: 'all 0.3s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = GOLD;
+                        e.currentTarget.style.boxShadow = '0 4px 20px rgba(200,168,124,0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '#E8E8E8';
+                        e.currentTarget.style.boxShadow = 'none';
                       }}
                     >
+                      {/* ─── Image ────────────────────────────────── */}
                       <div
                         style={{
-                          width: '100px',
-                          height: '70px',
+                          width: isMobile ? '100%' : '120px',
+                          height: isMobile ? '150px' : '80px',
                           borderRadius: '0.5rem',
                           overflow: 'hidden',
                           background: '#E0E0E0',
@@ -570,7 +615,10 @@ export default function DashboardPage() {
                           <span style={{ color: '#999', fontSize: '0.65rem' }}>No Image</span>
                         )}
                       </div>
-                      <div style={{ flex: 1 }}>
+
+                      {/* ─── Details ──────────────────────────────── */}
+                      <div style={{ flex: 1, width: '100%' }}>
+                        {/* Room Title & Status */}
                         <div
                           style={{
                             display: 'flex',
@@ -586,7 +634,7 @@ export default function DashboardPage() {
                               href={`/dashboard/bookings/${booking.documentId || booking.id}`}
                               style={{
                                 fontSize: '1.1rem',
-                                fontWeight: 600,
+                                fontWeight: 700,
                                 color: DARK_NAVY,
                                 textDecoration: 'none',
                                 transition: 'color 0.3s ease',
@@ -597,14 +645,7 @@ export default function DashboardPage() {
                               {roomData?.title || 'Room'}
                             </Link>
                           </div>
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.75rem',
-                              flexWrap: 'wrap',
-                            }}
-                          >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                             {getStatusBadge(bData?.booking_status)}
                             <Link
                               href={`/dashboard/bookings/${booking.documentId || booking.id}`}
@@ -636,60 +677,49 @@ export default function DashboardPage() {
                           </div>
                         </div>
 
+                        {/* ─── Guest Details (Styled & Bold) ────── */}
                         <div
                           style={{
-                            fontSize: '0.85rem',
-                            color: '#555555',
-                            marginTop: '0.25rem',
+                            display: 'grid',
+                            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr auto',
+                            gap: '0.5rem 1.25rem',
+                            marginTop: '0.5rem',
+                            padding: '0.5rem 0.75rem',
+                            background: 'rgba(255,255,255,0.6)',
+                            borderRadius: '0.5rem',
+                            border: '1px solid #E8E8E8',
                           }}
                         >
-                          <span>
-                            {formatDate(bData?.check_in)} – {formatDate(bData?.check_out)}
-                          </span>
-                          <span style={{ marginLeft: '1rem' }}>
-                            {' '}
-                            <strong style={{ color: GOLD }}>ETB {bData?.total}</strong>
-                          </span>
-                        </div>
+                          {/* Guest Name */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <GuestIcon size={14} color="#555" />
+                            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: DARK_NAVY }}>
+                              {bData?.name || 'N/A'}
+                            </span>
+                          </div>
 
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '0.75rem 1.25rem',
-                            marginTop: '0.25rem',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <p
-                            style={{
-                              fontSize: '0.75rem',
-                              color: '#999',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.4rem',
-                              margin: 0,
-                            }}
-                          >
-                            <GuestIcon size={18} color="#555" />
-                            {bData?.name}
-                          </p>
-                          <p
-                            style={{
-                              fontSize: '0.75rem',
-                              color: '#999',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.4rem',
-                              margin: 0,
-                            }}
-                          >
-                            <i
-                              className="fas fa-envelope"
-                              style={{ color: '#555', fontSize: '0.9rem', width: '18px', textAlign: 'center' }}
-                            ></i>
-                            {bData?.email || 'N/A'}
-                          </p>
+                          {/* Email */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <i className="fas fa-envelope" style={{ color: '#555', fontSize: '0.75rem', width: '14px', textAlign: 'center' }}></i>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#555' }}>
+                              {bData?.email || 'N/A'}
+                            </span>
+                          </div>
+
+                          {/* Check-in / Check-out */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <i className="fas fa-calendar-alt" style={{ color: '#555', fontSize: '0.75rem', width: '14px', textAlign: 'center' }}></i>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: DARK_NAVY }}>
+                              {formatDate(bData?.check_in)} – {formatDate(bData?.check_out)}
+                            </span>
+                          </div>
+
+                          {/* Total Price */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: GOLD }}>
+                              ETB {bData?.total || 0}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
