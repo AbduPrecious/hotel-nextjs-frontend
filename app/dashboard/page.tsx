@@ -184,10 +184,10 @@ export default function DashboardPage() {
 
   // ─── Stat card config with colors ─────────────────────────────
   const stats = [
-    { label: 'Total Bookings', value: total, color: DARK_NAVY, icon: '📊' },
-    { label: 'Pending', value: pending, color: '#F59E0B', icon: '⏳' },
-    { label: 'Approved', value: approved, color: '#22C55E', icon: '✅' },
-    { label: 'Rejected', value: rejected, color: '#EF4444', icon: '❌' },
+    { label: 'Total Bookings', value: total, color: DARK_NAVY, icon: 'fa-chart-simple' },
+    { label: 'Pending', value: pending, color: '#F59E0B', icon: 'fa-clock' },
+    { label: 'Approved', value: approved, color: '#22C55E', icon: 'fa-check-circle' },
+    { label: 'Rejected', value: rejected, color: '#EF4444', icon: 'fa-times-circle' },
   ];
 
   if (loading) {
@@ -460,7 +460,7 @@ export default function DashboardPage() {
         )}
 
         <div style={{ maxWidth: '1180px', margin: '0 auto', width: '100%' }}>
-          {/* ─── STAT CARDS (Animated + Colored) ────────────────── */}
+          {/* ─── STAT CARDS ──────────────────────────────────────── */}
           <div
             style={{
               display: 'grid',
@@ -493,7 +493,7 @@ export default function DashboardPage() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                  <span style={{ fontSize: '1.2rem' }}>{stat.icon}</span>
+                  <i className={`fas ${stat.icon}`} style={{ fontSize: '1.1rem', color: stat.color, width: '20px', textAlign: 'center' }}></i>
                   <p
                     style={{
                       fontSize: '0.65rem',
@@ -544,6 +544,7 @@ export default function DashboardPage() {
                 gap: '0.5rem',
               }}
             >
+              <i className="fas fa-bed" style={{ color: GOLD, fontSize: '1.2rem' }}></i>
               My Recent Stays
               <span
                 style={{
@@ -617,7 +618,7 @@ export default function DashboardPage() {
                       </div>
 
                       {/* ─── Details ──────────────────────────────── */}
-                      <div style={{ flex: 1, width: '100%' }}>
+                      <div style={{ flex: 1, width: '100%', minWidth: 0 }}>
                         {/* Room Title & Status */}
                         <div
                           style={{
@@ -677,11 +678,12 @@ export default function DashboardPage() {
                           </div>
                         </div>
 
-                        {/* ─── Guest Details (Styled & Bold) ────── */}
+                        {/* ─── Guest Details ──────────────────────── */}
                         <div
                           style={{
-                            display: 'grid',
-                            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr auto',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
                             gap: '0.5rem 1.25rem',
                             marginTop: '0.5rem',
                             padding: '0.5rem 0.75rem',
@@ -691,7 +693,7 @@ export default function DashboardPage() {
                           }}
                         >
                           {/* Guest Name */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
                             <GuestIcon size={14} color="#555" />
                             <span style={{ fontSize: '0.8rem', fontWeight: 600, color: DARK_NAVY }}>
                               {bData?.name || 'N/A'}
@@ -699,23 +701,23 @@ export default function DashboardPage() {
                           </div>
 
                           {/* Email */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
                             <i className="fas fa-envelope" style={{ color: '#555', fontSize: '0.75rem', width: '14px', textAlign: 'center' }}></i>
                             <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#555' }}>
                               {bData?.email || 'N/A'}
                             </span>
                           </div>
 
-                          {/* Check-in / Check-out */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          {/* Check-in / Check-out - NOW ON ONE LINE */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
                             <i className="fas fa-calendar-alt" style={{ color: '#555', fontSize: '0.75rem', width: '14px', textAlign: 'center' }}></i>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: DARK_NAVY }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: DARK_NAVY, whiteSpace: 'nowrap' }}>
                               {formatDate(bData?.check_in)} – {formatDate(bData?.check_out)}
                             </span>
                           </div>
 
                           {/* Total Price */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: 'auto' }}>
                             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: GOLD }}>
                               ETB {bData?.total || 0}
                             </span>
