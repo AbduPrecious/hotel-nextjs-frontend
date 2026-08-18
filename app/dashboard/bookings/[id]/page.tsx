@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { useAlert } from '../../../context/AlertContext';
 import { BedIcon, GuestIcon } from '../../../components/Icons';
 
-const API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337/api';
-const STRAPI_URL = API_URL.replace('/api', '');
+// 🔥 FIX: Use the correct Strapi base URL (without /api)
+const STRAPI_BASE = process.env.NEXT_PUBLIC_STRAPI_URL || 'https://api-hotel.qenenia.com';
+const API_URL = `${STRAPI_BASE}/api`;
+
 const GOLD = '#C8A87C';
 const DARK_NAVY = '#17232E';
 const BEIGE = '#ECEAE6';
@@ -65,7 +67,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       const data = await res.json();
       const bookingData = data.data || {};
 
-      // Fetch the room with photos only if we have a room documentId
       if (bookingData.room?.documentId) {
         const roomId = bookingData.room.documentId;
         const roomUrl = `${API_URL}/rooms/${roomId}?populate=photos`;
@@ -74,16 +75,14 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         });
         if (roomRes.ok) {
           const roomData = await roomRes.json();
-          // Strapi v5: data is the room object, photos might be under data.photos or data.attributes.photos
           const roomAttr = roomData.data || {};
-          // Extract photos array from various possible structures
+          // Extract photos safely
           let photos = [];
           if (roomAttr.photos) {
             photos = roomAttr.photos.data || roomAttr.photos;
           } else if (roomAttr.attributes?.photos) {
             photos = roomAttr.attributes.photos.data || roomAttr.attributes.photos;
           }
-          // Ensure photos is an array of objects with a 'url' property
           if (Array.isArray(photos)) {
             bookingData.room.photos = photos.map((p: any) => ({
               url: p.url || p.attributes?.url,
@@ -103,24 +102,16 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     }
   };
 
+  // 🔥 FIXED: Correctly build image URLs using the STRAPI_BASE
   const getImageUrl = (photo: any) => {
-  if (!photo) return null;
-  
-  // Extract the URL from various possible structures
-  const url = photo?.url || photo?.attributes?.url || photo?.data?.attributes?.url;
-  if (!url) return null;
-  
-  // If it's already a full URL, return it as-is
-  if (url.startsWith('http')) return url;
-  
-  // Build the full URL using the Strapi backend domain
-  // STRAPI_URL is already set to the base domain (without /api)
-  const base = STRAPI_URL.endsWith('/') ? STRAPI_URL.slice(0, -1) : STRAPI_URL;
-  const path = url.startsWith('/') ? url : `/${url}`;
-  
-  // Return the correctly constructed URL
-  return `${base}${path}`;
-};
+    if (!photo) return null;
+    const url = photo?.url || photo?.attributes?.url || photo?.data?.attributes?.url;
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    // Ensure the path starts with /
+    const path = url.startsWith('/') ? url : `/${url}`;
+    return `${STRAPI_BASE}${path}`;
+  };
 
   const photos = booking?.room?.photos || [];
   const currentPhoto = photos.length > 0 ? photos[currentPhotoIndex] : null;
