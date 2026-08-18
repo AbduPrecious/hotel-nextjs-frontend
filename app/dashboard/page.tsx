@@ -166,16 +166,21 @@ export default function DashboardPage() {
     );
   };
 
-  // Helper: build image URL from a photo object
-  const getImageUrl = (photo: any) => {
-    if (!photo) return null;
-    const url = photo?.url || photo?.attributes?.url;
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const base = STRAPI_URL.replace('/api', '');
-    const path = url.startsWith('/') ? url : `/${url}`;
-    return `${base}${path}`;
-  };
+ const getImageUrl = (photo: any) => {
+  if (!photo) return null;
+  
+  // Try different possible structures
+  const url = photo?.url || photo?.attributes?.url || photo?.data?.attributes?.url;
+  if (!url) return null;
+  
+  // If it's already a full URL, return it
+  if (url.startsWith('http')) return url;
+  
+  // Build the full URL using the API base (without /api)
+  const base = 'https://api-hotel.qenenia.com'; // Hardcoded for now – or use env
+  const path = url.startsWith('/') ? url : `/${url}`;
+  return `${base}${path}`;
+};
 
   const total = bookings.length;
   const pending = bookings.filter(
