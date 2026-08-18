@@ -65,6 +65,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       const data = await res.json();
       const bookingData = data.data || {};
 
+      // Fetch the room with photos only if we have a room documentId
       if (bookingData.room?.documentId) {
         const roomId = bookingData.room.documentId;
         const roomUrl = `${API_URL}/rooms/${roomId}?populate=photos`;
@@ -73,7 +74,23 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         });
         if (roomRes.ok) {
           const roomData = await roomRes.json();
-          bookingData.room.photos = roomData.data?.photos || roomData.photos || [];
+          // Strapi v5: data is the room object, photos might be under data.photos or data.attributes.photos
+          const roomAttr = roomData.data || {};
+          // Extract photos array from various possible structures
+          let photos = [];
+          if (roomAttr.photos) {
+            photos = roomAttr.photos.data || roomAttr.photos;
+          } else if (roomAttr.attributes?.photos) {
+            photos = roomAttr.attributes.photos.data || roomAttr.attributes.photos;
+          }
+          // Ensure photos is an array of objects with a 'url' property
+          if (Array.isArray(photos)) {
+            bookingData.room.photos = photos.map((p: any) => ({
+              url: p.url || p.attributes?.url,
+            }));
+          } else {
+            bookingData.room.photos = [];
+          }
           setCurrentPhotoIndex(0);
         }
       }
@@ -87,6 +104,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const getImageUrl = (photo: any) => {
+    if (!photo) return null;
     const url = photo?.url || photo?.attributes?.url || photo?.data?.attributes?.url;
     if (!url) return null;
     if (url.startsWith('http')) return url;
@@ -136,9 +154,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           setCancelling(false);
         }
       },
-      onCancel: () => {
-        // optional: user cancelled
-      },
+      onCancel: () => {},
     });
   };
 
@@ -227,7 +243,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         }
         .animate-in { animation: fadeInUp 0.8s ease forwards; opacity: 0; }
 
-        /* ─── Contact-style hero ──────────────────────────────── */
         .contact-hero {
           background: ${DARK_NAVY};
           padding: 3rem 1rem;
@@ -272,7 +287,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         }
       `}</style>
 
-      {/* ─── HERO (Contact page style) ─── */}
+      {/* ─── HERO ─── */}
       <div className="contact-hero animate-in" style={{ padding: isMobile ? '4rem 1rem' : '5rem 1rem' }}>
         <div className="breadcrumb">
           <Link href="/">Home</Link>
@@ -512,16 +527,13 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   </span>
                 </div>
 
-                {/* ─── Details Grid with Icons ─── */}
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
-                  {/* Guest */}
                   <div>
                     <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Guest</div>
                     <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: DARK_NAVY }}>
                       <GuestIcon size={18} color="#555" /> {booking?.name || 'N/A'}
                     </strong>
                   </div>
-                  {/* Email */}
                   <div>
                     <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Email</div>
                     <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: DARK_NAVY }}>
@@ -529,7 +541,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                       {booking?.email || 'N/A'}
                     </strong>
                   </div>
-                  {/* Phone */}
                   <div>
                     <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Phone</div>
                     <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: DARK_NAVY }}>
@@ -537,7 +548,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                       {booking?.phone || 'N/A'}
                     </strong>
                   </div>
-                  {/* Total */}
                   <div>
                     <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Total</div>
                     <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: GOLD }}>
