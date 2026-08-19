@@ -339,8 +339,8 @@ export default function Home() {
 
       {/* ─── HERO (now with ScrollReveal & no padding) ─── */}
       <ScrollReveal delay={0}>
-               <section style={{ position: 'relative', height: isMobile ? '60vh' : '100vh', minHeight: isMobile ? '320px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem', overflow: 'hidden', background: '#FFFFFF' }}>
-          {/* Dynamic Media Background */}
+              <section style={{ position: 'relative', height: isMobile ? '40dvh' : '100vh', minHeight: isMobile ? '250px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem', overflow: 'hidden', background: '#FFFFFF' }}>
+          {/* Dynamic Media Background */} 
           {mediaList.length > 0 ? (
             <>
               {mediaList.map((media, idx) => {
@@ -357,7 +357,7 @@ export default function Home() {
                   }}
                 >
                   {isVideo(media) ? (
-                    <video
+                                       <video
                       src={mediaUrl}
                       autoPlay
                       loop
@@ -366,19 +366,19 @@ export default function Home() {
                       style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
+                        objectFit: 'contain', // 👈 changed
                         objectPosition: 'center',
                         filter: 'brightness(1.2)',
                       }}
                     />
                   ) : mediaUrl ? (
-                    <Image
+                                        <Image
                       src={mediaUrl}
                       alt={`${hotelName} - slide ${idx + 1}`}
                       style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
+                        objectFit: 'contain', // 👈 changed
                         objectPosition: 'center',
                         transform: `translateY(${offsetY * 0.15}px)`,
                         filter: 'brightness(1.2)',
@@ -471,14 +471,15 @@ export default function Home() {
    {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
 <ScrollReveal delay={200}>
   <section
-    style={{
+        style={{
       position: 'relative',
       zIndex: 30,
       marginTop: isMobile ? '-20px' : '-50px',
       padding: isMobile ? '0 1rem' : '0 1rem',
       maxWidth: '1180px',
       margin: isMobile ? '-20px 1rem 2rem' : '-50px auto 3rem',
-      backgroundColor: '#FFFFFF', // Forcefully overriding any dark background
+      backgroundColor: '#FFFFFF',
+      colorScheme: 'light', // 👈 ADD THIS TO FORCE LIGHT MODE INPUTS
       borderRadius: '4px',
       boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
     }}
