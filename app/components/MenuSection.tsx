@@ -254,11 +254,11 @@ export default function MenuSection({ items }: MenuSectionProps) {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                {imageUrl && (
+                               {imageUrl && (
                   <div
                     style={{
                       position: 'relative',
-                       height: '240px',
+                      height: '300px', // Increased from 180px to make cards much taller
                       overflow: 'hidden',
                       flexShrink: 0,
                     }}
@@ -270,6 +270,7 @@ export default function MenuSection({ items }: MenuSectionProps) {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
+                        objectPosition: 'top center', // 👈 THIS prevents the top from being cut off
                         transition: 'transform 0.7s ease-out',
                       }}
                       onMouseEnter={(e) => {
