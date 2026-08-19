@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAlert } from '../../../context/AlertContext';
 import { BedIcon, GuestIcon } from '../../../components/Icons';
-import ScrollReveal from '../../../../components/ScrollReveal';
+import ScrollReveal from '../../../components/ScrollReveal';
 
 // 🔥 FIX: Use the correct Strapi base URL (without /api)
 const STRAPI_BASE = process.env.NEXT_PUBLIC_STRAPI_URL || 'https://api-hotel.qenenia.com';
