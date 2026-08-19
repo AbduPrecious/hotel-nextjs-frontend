@@ -233,7 +233,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const capacity = roomData?.capacity || '—';
   const bedType = roomData?.bed_type || '—';
 
-  return (
+   return (
     <div style={{ minHeight: '100vh', background: BEIGE, paddingTop: isMobile ? '5rem' : '6.5rem' }}>
       <style>{`
         @keyframes fadeInUp {
@@ -286,168 +286,167 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         }
       `}</style>
 
+      {/* ✅ Fixed Wrapper with max-width */}
+      <div style={{ maxWidth: '1180px', margin: '0 auto', padding: '0 1rem', marginTop: isMobile ? '-1rem' : '-2rem' }}>
+        {/* RIGHT: Booking Details */}
+        <div
+          style={{
+            background: '#fff',
+            borderRadius: '1.5rem',
+            padding: isMobile ? '1rem' : '1.5rem',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div>
+              <h2 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '0.25rem' }}>
+                Booking Details
+              </h2>
+              <span
+                style={{
+                  display: 'inline-block',
+                  padding: '0.3rem 1rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  background: statusColors.bg,
+                  color: statusColors.text,
+                }}
+              >
+                {status}
+              </span>
+            </div>
 
-            {/* RIGHT: Booking Details */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Guest</div>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: DARK_NAVY }}>
+                  <GuestIcon size={18} color="#555" /> {booking?.name || 'N/A'}
+                </strong>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Email</div>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: DARK_NAVY }}>
+                  <i className="fas fa-envelope" style={{ color: '#555', fontSize: '18px', width: '18px', textAlign: 'center' }}></i>
+                  {booking?.email || 'N/A'}
+                </strong>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Phone</div>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: DARK_NAVY }}>
+                  <i className="fas fa-phone" style={{ color: '#555', fontSize: '18px', width: '18px', textAlign: 'center' }}></i>
+                  {booking?.phone || 'N/A'}
+                </strong>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Total</div>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: GOLD }}>
+                  ETB {booking?.total || 0}
+                </strong>
+              </div>
+            </div>
+
             <div
               style={{
-                background: '#fff',
-                borderRadius: '1.5rem',
-                padding: isMobile ? '1rem' : '1.5rem',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
+                background: '#f8f8f8',
+                padding: '1rem',
+                borderRadius: '0.75rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
               }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div>
-                  <h2 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '0.25rem' }}>
-                    Booking Details
-                  </h2>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      padding: '0.3rem 1rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      background: statusColors.bg,
-                      color: statusColors.text,
-                    }}
-                  >
-                    {status}
-                  </span>
-                </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Check‑in</div>
+                <strong>{booking?.check_in ? new Date(booking.check_in).toLocaleDateString() : 'N/A'}</strong>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Check‑out</div>
+                <strong>{booking?.check_out ? new Date(booking.check_out).toLocaleDateString() : 'N/A'}</strong>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Nights</div>
+                <strong>
+                  {booking?.check_in && booking?.check_out
+                    ? Math.ceil(
+                        (new Date(booking.check_out).getTime() - new Date(booking.check_in).getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )
+                    : '—'}
+                </strong>
+              </div>
+            </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Guest</div>
-                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: DARK_NAVY }}>
-                      <GuestIcon size={18} color="#555" /> {booking?.name || 'N/A'}
-                    </strong>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Email</div>
-                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: DARK_NAVY }}>
-                      <i className="fas fa-envelope" style={{ color: '#555', fontSize: '18px', width: '18px', textAlign: 'center' }}></i>
-                      {booking?.email || 'N/A'}
-                    </strong>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Phone</div>
-                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: DARK_NAVY }}>
-                      <i className="fas fa-phone" style={{ color: '#555', fontSize: '18px', width: '18px', textAlign: 'center' }}></i>
-                      {booking?.phone || 'N/A'}
-                    </strong>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Total</div>
-                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: GOLD }}>
-                      ETB {booking?.total || 0}
-                    </strong>
-                  </div>
-                </div>
-
-                <div
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+              <Link
+                href="/dashboard"
+                style={{
+                  padding: '0.65rem 2rem',
+                  background: 'transparent',
+                  border: `2px solid ${DARK_NAVY}`,
+                  borderRadius: '9999px',
+                  color: DARK_NAVY,
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  transition: 'all 0.3s ease',
+                  flex: '1 1 auto',
+                  textAlign: 'center',
+                  width: isMobile ? '100%' : 'auto',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = DARK_NAVY;
+                  e.currentTarget.style.color = '#fff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = DARK_NAVY;
+                }}
+              >
+                Back to Dashboard
+              </Link>
+              {(status === 'pending' || status === 'approved') && (
+                <button
+                  onClick={handleCancelBooking}
+                  disabled={cancelling}
                   style={{
-                    background: '#f8f8f8',
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
+                    padding: '0.65rem 2rem',
+                    background: '#EF4444',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '9999px',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: cancelling ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    opacity: cancelling ? 0.7 : 1,
+                    flex: '1 1 auto',
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     gap: '0.5rem',
+                    width: isMobile ? '100%' : 'auto',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!cancelling) {
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(239,68,68,0.3)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!cancelling) {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }
                   }}
                 >
-                  <div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Check‑in</div>
-                    <strong>{booking?.check_in ? new Date(booking.check_in).toLocaleDateString() : 'N/A'}</strong>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Check‑out</div>
-                    <strong>{booking?.check_out ? new Date(booking.check_out).toLocaleDateString() : 'N/A'}</strong>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#999' }}>Nights</div>
-                    <strong>
-                      {booking?.check_in && booking?.check_out
-                        ? Math.ceil(
-                            (new Date(booking.check_out).getTime() - new Date(booking.check_in).getTime()) /
-                              (1000 * 60 * 60 * 24)
-                          )
-                        : '—'}
-                    </strong>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                  <Link
-                    href="/dashboard"
-                    style={{
-                      padding: '0.65rem 2rem',
-                      background: 'transparent',
-                      border: `2px solid ${DARK_NAVY}`,
-                      borderRadius: '9999px',
-                      color: DARK_NAVY,
-                      textDecoration: 'none',
-                      fontWeight: 600,
-                      fontSize: '0.85rem',
-                      transition: 'all 0.3s ease',
-                      flex: '1 1 auto',
-                      textAlign: 'center',
-                      width: isMobile ? '100%' : 'auto',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = DARK_NAVY;
-                      e.currentTarget.style.color = '#fff';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = DARK_NAVY;
-                    }}
-                  >
-                    Back to Dashboard
-                  </Link>
-                  {(status === 'pending' || status === 'approved') && (
-                    <button
-                      onClick={handleCancelBooking}
-                      disabled={cancelling}
-                      style={{
-                        padding: '0.65rem 2rem',
-                        background: '#EF4444',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '9999px',
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
-                        cursor: cancelling ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.3s ease',
-                        opacity: cancelling ? 0.7 : 1,
-                        flex: '1 1 auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        width: isMobile ? '100%' : 'auto',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!cancelling) {
-                          e.currentTarget.style.transform = 'scale(1.02)';
-                          e.currentTarget.style.boxShadow = '0 8px 25px rgba(239,68,68,0.3)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!cancelling) {
-                          e.currentTarget.style.transform = 'scale(1)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }
-                      }}
-                    >
-                      <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>✕</span>{' '}
-                      {cancelling ? 'Processing...' : 'Cancel Booking'}
-                    </button>
-                  )}
-                </div>
-              </div>
+                  <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>✕</span>{' '}
+                  {cancelling ? 'Processing...' : 'Cancel Booking'}
+                </button>
+              )}
             </div>
           </div>
         </div>
