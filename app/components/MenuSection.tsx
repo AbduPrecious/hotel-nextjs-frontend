@@ -254,11 +254,12 @@ export default function MenuSection({ items }: MenuSectionProps) {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                               {imageUrl && (
+                                              {imageUrl && (
                   <div
                     style={{
                       position: 'relative',
-                      height: '300px', // Increased from 180px to make cards much taller
+                      width: '100%',
+                      aspectRatio: '4 / 3', // 👈 Dynamically tall, no fixed pixels!
                       overflow: 'hidden',
                       flexShrink: 0,
                     }}
@@ -270,7 +271,7 @@ export default function MenuSection({ items }: MenuSectionProps) {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        objectPosition: 'top center', // 👈 THIS prevents the top from being cut off
+                        objectPosition: 'top center', // 👈 Locks the top so the burger bun & top fruits are NEVER cut
                         transition: 'transform 0.7s ease-out',
                       }}
                       onMouseEnter={(e) => {
@@ -287,6 +288,7 @@ export default function MenuSection({ items }: MenuSectionProps) {
                         background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)',
                         opacity: 0.4,
                         transition: 'opacity 0.4s ease',
+                        pointerEvents: 'none',
                       }}
                     />
                   </div>
