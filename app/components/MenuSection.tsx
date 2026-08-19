@@ -258,7 +258,7 @@ export default function MenuSection({ items }: MenuSectionProps) {
                   <div
                     style={{
                       position: 'relative',
-                      height: '180px',
+                       height: '240px',
                       overflow: 'hidden',
                       flexShrink: 0,
                     }}
