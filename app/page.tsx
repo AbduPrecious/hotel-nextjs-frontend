@@ -339,7 +339,7 @@ export default function Home() {
 
       {/* ─── HERO (now with ScrollReveal & no padding) ─── */}
       <ScrollReveal delay={0}>
-        <section style={{ position: 'relative', height: '100vh', minHeight: isMobile ? '500px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem', overflow: 'hidden', background: '#FFFFFF' }}>
+               <section style={{ position: 'relative', height: isMobile ? '60vh' : '100vh', minHeight: isMobile ? '320px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem', overflow: 'hidden', background: '#FFFFFF' }}>
           {/* Dynamic Media Background */}
           {mediaList.length > 0 ? (
             <>
@@ -468,7 +468,7 @@ export default function Home() {
         </section>
       </ScrollReveal>
 
-     {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
+   {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
 <ScrollReveal delay={200}>
   <section
     style={{
@@ -478,9 +478,9 @@ export default function Home() {
       padding: isMobile ? '0 1rem' : '0 1rem',
       maxWidth: '1180px',
       margin: isMobile ? '-20px 1rem 2rem' : '-50px auto 3rem',
-      background: '#FFFFFF', // ← White background for the whole section
-      borderRadius: '4px',   // optional: slight rounding
-      boxShadow: '0 15px 35px rgba(0,0,0,0.2)', // moved shadow to section
+      backgroundColor: '#FFFFFF', // Forcefully overriding any dark background
+      borderRadius: '4px',
+      boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
     }}
   >
     <form
@@ -489,7 +489,7 @@ export default function Home() {
         backgroundColor: '#FFFFFF',
         padding: isMobile ? '1rem' : '1.75rem 2rem',
         borderBottom: '3px solid #17232E',
-        borderRadius: '4px', // optional, matches section
+        borderRadius: '4px',
       }}
     >
       <div
@@ -500,7 +500,7 @@ export default function Home() {
           alignItems: 'end',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
           <label
             style={{
               fontSize: '0.72rem',
@@ -525,12 +525,12 @@ export default function Home() {
               fontSize: '1rem',
               color: '#111111',
               outline: 'none',
-              background: 'transparent',
+              backgroundColor: '#FFFFFF', // Changed from transparent
             }}
             required
           />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
           <label
             style={{
               fontSize: '0.72rem',
@@ -555,12 +555,12 @@ export default function Home() {
               fontSize: '1rem',
               color: '#111111',
               outline: 'none',
-              background: 'transparent',
+              backgroundColor: '#FFFFFF', // Changed from transparent
             }}
             required
           />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
           <label
             style={{
               fontSize: '0.72rem',
@@ -583,7 +583,7 @@ export default function Home() {
               fontSize: '1rem',
               color: '#111111',
               outline: 'none',
-              background: 'transparent',
+              backgroundColor: '#FFFFFF', // Changed from transparent
               cursor: 'pointer',
             }}
           >
@@ -594,7 +594,7 @@ export default function Home() {
             ))}
           </select>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
           <label
             style={{
               fontSize: '0.72rem',
@@ -617,7 +617,7 @@ export default function Home() {
               fontSize: '1rem',
               color: '#111111',
               outline: 'none',
-              background: 'transparent',
+              backgroundColor: '#FFFFFF', // Changed from transparent
               cursor: 'pointer',
             }}
           >
@@ -633,6 +633,7 @@ export default function Home() {
             display: 'flex',
             flexDirection: 'column',
             gridColumn: isMobile ? '1 / -1' : 'span 1',
+            backgroundColor: '#FFFFFF',
           }}
         >
           <button
