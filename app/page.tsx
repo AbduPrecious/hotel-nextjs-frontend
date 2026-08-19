@@ -339,7 +339,7 @@ export default function Home() {
 
       {/* ─── HERO (now with ScrollReveal & no padding) ─── */}
       <ScrollReveal delay={0}>
-              <section style={{ position: 'relative', height: isMobile ? '40dvh' : '100vh', minHeight: isMobile ? '250px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem', overflow: 'hidden', background: '#FFFFFF' }}>
+             <section style={{ position: 'relative', marginTop: isMobile ? '80px' : '0px', height: isMobile ? '40dvh' : '100vh', minHeight: isMobile ? '250px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem', overflow: 'hidden', background: '#FFFFFF' }}>
           {/* Dynamic Media Background */} 
           {mediaList.length > 0 ? (
             <>
@@ -470,8 +470,8 @@ export default function Home() {
 
    {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
 <ScrollReveal delay={200}>
-  <section
-        style={{
+     <section
+    style={{
       position: 'relative',
       zIndex: 30,
       marginTop: isMobile ? '-20px' : '-50px',
@@ -479,7 +479,8 @@ export default function Home() {
       maxWidth: '1180px',
       margin: isMobile ? '-20px 1rem 2rem' : '-50px auto 3rem',
       backgroundColor: '#FFFFFF',
-      colorScheme: 'light', // 👈 ADD THIS TO FORCE LIGHT MODE INPUTS
+      colorScheme: 'light', // 👈 Forces light mode inputs (fixes black background)
+      forcedColorAdjust: 'none', // 👈 Prevents browser dark mode from overriding
       borderRadius: '4px',
       boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
     }}
