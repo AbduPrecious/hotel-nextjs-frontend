@@ -457,36 +457,40 @@ export default function Home() {
             </div>
           )}
 
-                   {/* Hero Content */}
-          <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: '0 1rem', ...(isMobile ? { width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' } : {}) }}>
-            <h1 style={{ fontSize: isMobile ? '1.4rem' : '2.25rem', fontWeight: 'bold', color: '#FFFFFF', marginBottom: '0.5rem', textShadow: '0 2px 30px rgba(0,0,0,0.5)' }}>
-              {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
-            </h1>
+                             {/* Hero Content */}
+          <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: '1rem', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
             
-            {/* Buttons Group - Moved UP */}
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: isMobile ? '0.5rem' : '0' }}>
-              <a href="#rooms" style={{ background: 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 100%)', color: '#1A1A1A', fontWeight: 600, padding: isMobile ? '0.5rem 1rem' : '0.75rem 2rem', borderRadius: '9999px', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(200,168,124,0.3)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Explore Rooms<svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></a>
-              <Link href="/rooms" style={{ border: '2px solid #FFFFFF', color: '#FFFFFF', fontWeight: 600, padding: isMobile ? '0.5rem 1rem' : '0.75rem 2rem', borderRadius: '9999px', background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#1A1A1A'; e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(255,255,255,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Book Now<svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></Link>
+            {/* Top: Pushes the H1 to the top so it clears the navbar */}
+            <div>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '2.25rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)' }}>
+                {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
+              </h1>
             </div>
 
-            {/* Text - Moved DOWN below the buttons */}
-            <p style={{ fontSize: isMobile ? '0.7rem' : '0.875rem', color: '#FFFFFF', maxWidth: '672px', margin: '0 auto', lineHeight: '1.5', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
-              Welcome to {hotelName}, where comfort meets elegance.
-            </p>
+            {/* Bottom: Pushes Text & Buttons to the very bottom, below the arrows */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <p style={{ fontSize: isMobile ? '0.7rem' : '0.875rem', color: '#FFFFFF', maxWidth: '672px', margin: '0 auto', lineHeight: '1.5', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
+                Welcome to {hotelName}, where comfort meets elegance.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <a href="#rooms" style={{ background: 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 100%)', color: '#1A1A1A', fontWeight: 600, padding: isMobile ? '0.5rem 1rem' : '0.75rem 2rem', borderRadius: '9999px', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(200,168,124,0.3)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Explore Rooms<svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></a>
+                <Link href="/rooms" style={{ border: '2px solid #FFFFFF', color: '#FFFFFF', fontWeight: 600, padding: isMobile ? '0.5rem 1rem' : '0.75rem 2rem', borderRadius: '9999px', background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#1A1A1A'; e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(255,255,255,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Book Now<svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></Link>
+              </div>
+            </div>
           </div>
         </section>
       </ScrollReveal>
 
    {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
 <ScrollReveal delay={200}>
-          <section
+           <section
     style={{
       position: 'relative',
       zIndex: 30,
-      marginTop: isMobile ? '-15px' : '-50px',
+      marginTop: isMobile ? '0px' : '-50px',
       padding: isMobile ? '0 1rem' : '0 1rem',
       maxWidth: '1180px',
-      margin: isMobile ? '-15px 1rem 2rem' : '-50px auto 3rem',
+      margin: isMobile ? '0 1rem 2rem' : '-50px auto 3rem',
       backgroundColor: '#FFFFFF',
       colorScheme: 'light',
       forcedColorAdjust: 'none',
