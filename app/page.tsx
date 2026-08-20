@@ -474,7 +474,6 @@ export default function Home() {
               Welcome to {hotelName}, where comfort meets elegance.
             </p>
           </div>
-          </div>
         </section>
       </ScrollReveal>
 
