@@ -21,11 +21,12 @@ export default function Navbar() {
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState('English');
 
+  // 👇 Updated with your exact text names
   const languages = [
     { name: 'English', code: 'en' },
-    { name: 'Afaan Oromoo', code: 'om' },
-    { name: 'Amharic', code: 'am' },
-    { name: 'Arabic', code: 'ar' },
+    { name: 'العربية', code: 'ar' },
+    { name: 'Oromoo', code: 'om' },
+    { name: 'አማርኛ', code: 'am' },
   ];
 
   // ─── Responsive state for the top bar ─────────────────────
