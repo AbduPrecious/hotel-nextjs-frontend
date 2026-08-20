@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAlert } from '../../../context/AlertContext';
 import { BedIcon, GuestIcon } from '../../../components/Icons';
-// 🔥 Added ScrollReveal to wrap the left and right columns
 import ScrollReveal from '../../../components/ScrollReveal';
 
 const STRAPI_BASE = process.env.NEXT_PUBLIC_STRAPI_URL || 'https://api-hotel.qenenia.com';
@@ -243,7 +242,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
         .contact-hero {
           background: ${DARK_NAVY};
-          padding: 3rem 1rem;
           text-align: center;
           border-bottom: 3px solid ${GOLD};
         }
@@ -285,11 +283,11 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         }
       `}</style>
 
-      {/* ─── MAIN WRAPPER (Fixed Navbar Overlap) ─── */}
-      <div style={{ minHeight: '100vh', background: BEIGE, paddingTop: isMobile ? '6.5rem' : '8rem' }}>
+      {/* ─── MAIN WRAPPER (Removed top spacing to connect to navbar) ─── */}
+      <div style={{ minHeight: '100vh', background: BEIGE, paddingTop: '0px' }}>
         
-        {/* ─── HERO SECTION (Like Checkout Page) ─── */}
-        <div className="contact-hero animate-in" style={{ padding: isMobile ? '4rem 1rem' : '5rem 1rem' }}>
+        {/* ─── HERO SECTION (Touches navbar, updated text) ─── */}
+        <div className="contact-hero animate-in" style={{ paddingTop: isMobile ? '80px' : '95px', paddingBottom: isMobile ? '4rem' : '5rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
           <div className="breadcrumb">
             <Link href="/">Home</Link>
             <span>/</span>
@@ -299,7 +297,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           </div>
           <h1>{roomTitle}</h1>
           <p>
-            Booking ID: {id}  |  Status: <strong style={{ textTransform: 'capitalize', color: statusColors.bg }}>{status}</strong>
+            Check-in: <strong>{booking?.check_in ? new Date(booking.check_in).toLocaleDateString() : 'N/A'}</strong> &nbsp;|&nbsp; Check-out: <strong>{booking?.check_out ? new Date(booking.check_out).toLocaleDateString() : 'N/A'}</strong>
           </p>
         </div>
 
@@ -309,19 +307,20 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               display: 'grid',
               gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
               gap: '2rem',
+              alignItems: 'stretch', // Makes both cards equal height
             }}
           >
-            {/* ─── LEFT: Room Image Gallery ─── */}
+            {/* ─── LEFT: Room Image Card (Full width image banner) ─── */}
             <ScrollReveal delay={100}>
               <div
                 style={{
                   background: '#FFFFFF',
                   borderRadius: '1.5rem',
-                  padding: '1.5rem',
+                  overflow: 'hidden',
                   boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '1rem',
+                  height: '100%',
                 }}
               >
                 {photos && photos.length > 0 ? (
@@ -329,9 +328,8 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                     style={{
                       position: 'relative',
                       width: '100%',
-                      height: isMobile ? '220px' : '300px',
-                      borderRadius: '1rem',
-                      overflow: 'hidden',
+                      height: isMobile ? '240px' : '320px',
+                      flexShrink: 0,
                       background: '#F0F0F0',
                     }}
                   >
@@ -430,20 +428,20 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   <div
                     style={{
                       width: '100%',
-                      height: isMobile ? '220px' : '300px',
+                      height: isMobile ? '240px' : '320px',
                       background: '#F0F0F0',
-                      borderRadius: '1rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: '#999',
+                      flexShrink: 0,
                     }}
                   >
                     No Room Image
                   </div>
                 )}
                 
-                <div>
+                <div style={{ padding: '1.5rem', flexGrow: 1 }}>
                   <h3
                     style={{
                       fontSize: '1.3rem',
@@ -472,7 +470,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </ScrollReveal>
 
-            {/* ─── RIGHT: Booking Details Form ─── */}
+            {/* ─── RIGHT: Booking Details (Stretches to match left) ─── */}
             <ScrollReveal delay={300}>
               <div
                 style={{
@@ -480,9 +478,12 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   borderRadius: '1.5rem',
                   padding: isMobile ? '1rem' : '1.5rem',
                   boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
                 }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', flexGrow: 1 }}>
                   <div>
                     <h2 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '0.25rem' }}>
                       Booking Details
@@ -564,75 +565,76 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                       </strong>
                     </div>
                   </div>
+                </div>
 
-                  <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                    <Link
-                      href="/dashboard"
+                {/* ─── BUTTONS (Pushed to bottom to match left card) ─── */}
+                <div style={{ marginTop: 'auto', display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1rem', flexWrap: 'wrap', paddingTop: '1.5rem' }}>
+                  <Link
+                    href="/dashboard"
+                    style={{
+                      padding: '0.65rem 2rem',
+                      background: 'transparent',
+                      border: `2px solid ${DARK_NAVY}`,
+                      borderRadius: '9999px',
+                      color: DARK_NAVY,
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      transition: 'all 0.3s ease',
+                      flex: '1 1 auto',
+                      textAlign: 'center',
+                      width: isMobile ? '100%' : 'auto',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = DARK_NAVY;
+                      e.currentTarget.style.color = '#fff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = DARK_NAVY;
+                    }}
+                  >
+                    Back to Dashboard
+                  </Link>
+                  {(status === 'pending' || status === 'approved') && (
+                    <button
+                      onClick={handleCancelBooking}
+                      disabled={cancelling}
                       style={{
                         padding: '0.65rem 2rem',
-                        background: 'transparent',
-                        border: `2px solid ${DARK_NAVY}`,
+                        background: '#EF4444',
+                        color: '#fff',
+                        border: 'none',
                         borderRadius: '9999px',
-                        color: DARK_NAVY,
-                        textDecoration: 'none',
                         fontWeight: 600,
                         fontSize: '0.85rem',
+                        cursor: cancelling ? 'not-allowed' : 'pointer',
                         transition: 'all 0.3s ease',
+                        opacity: cancelling ? 0.7 : 1,
                         flex: '1 1 auto',
-                        textAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
                         width: isMobile ? '100%' : 'auto',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = DARK_NAVY;
-                        e.currentTarget.style.color = '#fff';
+                        if (!cancelling) {
+                          e.currentTarget.style.transform = 'scale(1.02)';
+                          e.currentTarget.style.boxShadow = '0 8px 25px rgba(239,68,68,0.3)';
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = DARK_NAVY;
+                        if (!cancelling) {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }
                       }}
                     >
-                      Back to Dashboard
-                    </Link>
-                    {(status === 'pending' || status === 'approved') && (
-                      <button
-                        onClick={handleCancelBooking}
-                        disabled={cancelling}
-                        style={{
-                          padding: '0.65rem 2rem',
-                          background: '#EF4444',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '9999px',
-                          fontWeight: 600,
-                          fontSize: '0.85rem',
-                          cursor: cancelling ? 'not-allowed' : 'pointer',
-                          transition: 'all 0.3s ease',
-                          opacity: cancelling ? 0.7 : 1,
-                          flex: '1 1 auto',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.5rem',
-                          width: isMobile ? '100%' : 'auto',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!cancelling) {
-                            e.currentTarget.style.transform = 'scale(1.02)';
-                            e.currentTarget.style.boxShadow = '0 8px 25px rgba(239,68,68,0.3)';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!cancelling) {
-                            e.currentTarget.style.transform = 'scale(1)';
-                            e.currentTarget.style.boxShadow = 'none';
-                          }
-                        }}
-                      >
-                        <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>✕</span>{' '}
-                        {cancelling ? 'Processing...' : 'Cancel Booking'}
-                      </button>
-                    )}
-                  </div>
+                      <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>✕</span>{' '}
+                      {cancelling ? 'Processing...' : 'Cancel Booking'}
+                    </button>
+                  )}
                 </div>
               </div>
             </ScrollReveal>
