@@ -344,7 +344,7 @@ export default function Home() {
 
       {/* ─── HERO (now with ScrollReveal & no padding) ─── */}
       <ScrollReveal delay={0}>
-             <section style={{ position: 'relative', marginTop: isMobile ? '80px' : '0px', height: isMobile ? '40dvh' : '100vh', minHeight: isMobile ? '250px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem', overflow: 'hidden', background: '#FFFFFF' }}>
+                    <section style={{ position: 'relative', height: isMobile ? '55dvh' : '100vh', minHeight: isMobile ? '400px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '0 1rem' : '0 1rem', overflow: 'hidden', background: '#FFFFFF' }}>
           {/* Dynamic Media Background */} 
           {mediaList.length > 0 ? (
             <>
@@ -457,18 +457,18 @@ export default function Home() {
             </div>
           )}
 
-                             {/* Hero Content */}
-          <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: '1rem', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                      {/* Hero Content */}
+          <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: '0 1rem', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
             
-            {/* Top: Pushes the H1 to the top so it clears the navbar */}
-            <div>
+            {/* Top: Pushes the H1 down so it clears the white navbar */}
+            <div style={{ paddingTop: isMobile ? '80px' : '0' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '2.25rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)' }}>
                 {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
               </h1>
             </div>
 
-            {/* Bottom: Pushes Text & Buttons to the very bottom, below the arrows */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Bottom: Pushes Text & Buttons to the bottom, with safe padding to avoid overlap */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingBottom: isMobile ? '20px' : '0' }}>
               <p style={{ fontSize: isMobile ? '0.7rem' : '0.875rem', color: '#FFFFFF', maxWidth: '672px', margin: '0 auto', lineHeight: '1.5', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
                 Welcome to {hotelName}, where comfort meets elegance.
               </p>
@@ -483,14 +483,14 @@ export default function Home() {
 
    {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
 <ScrollReveal delay={200}>
-           <section
+              <section
     style={{
       position: 'relative',
       zIndex: 30,
-      marginTop: isMobile ? '0px' : '-50px',
+      marginTop: isMobile ? '-15px' : '-50px',
       padding: isMobile ? '0 1rem' : '0 1rem',
       maxWidth: '1180px',
-      margin: isMobile ? '0 1rem 2rem' : '-50px auto 3rem',
+      margin: isMobile ? '-15px 1rem 2rem' : '-50px auto 3rem',
       backgroundColor: '#FFFFFF',
       colorScheme: 'light',
       forcedColorAdjust: 'none',
