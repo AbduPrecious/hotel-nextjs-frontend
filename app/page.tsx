@@ -470,7 +470,7 @@ export default function Home() {
               <Link href="/rooms" style={{ border: '2px solid #FFFFFF', color: '#FFFFFF', fontWeight: 600, padding: isMobile ? '0.5rem 1rem' : '0.75rem 2rem', borderRadius: '9999px', background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#1A1A1A'; e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(255,255,255,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Book Now<svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></Link>
             </div>
           </div>
-          </div>
+          
         </section>
       </ScrollReveal>
 
