@@ -331,10 +331,10 @@ export default function Home() {
           margin: 0;
           padding: 0;
         }
-      `}</style>
-    // ✅ Removed paddingTop – now hero sits correctly
-    <div style={{ minHeight: '100vh', background: '#0A0A0A' }}>
-      <style>{`
+            `}</style>
+      {/* ✅ Removed paddingTop – now hero sits correctly */}
+      <div style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
+        <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
