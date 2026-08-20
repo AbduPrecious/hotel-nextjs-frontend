@@ -17,7 +17,18 @@ export default function Navbar() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
 
-  // Responsive state for the top bar
+  // ─── Language Dropdown State ──────────────────────────────
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState('English');
+
+  const languages = [
+    { name: 'English', code: 'en' },
+    { name: 'Afaan Oromoo', code: 'om' },
+    { name: 'Amharic', code: 'am' },
+    { name: 'Arabic', code: 'ar' },
+  ];
+
+  // ─── Responsive state for the top bar ─────────────────────
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -97,7 +108,6 @@ export default function Navbar() {
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
         alignItems: 'center',
-        // ✅ Fixed: Space-between on desktop, Center on mobile
         justifyContent: isMobile ? 'center' : 'space-between',
         flexWrap: 'wrap',
         gap: isMobile ? '0.8rem' : '0.5rem',
@@ -165,15 +175,74 @@ export default function Navbar() {
 
           {!isMobile && <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.1)' }} />}
 
-          {/* ─── LANGUAGE ─── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <svg width={isMobile ? "14" : "16"} height={isMobile ? "14" : "16"} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .927-.1 1.841-.289 2.724m0 0a11.948 11.948 0 01-4.498 2.537m-8.693-5.37a8.959 8.959 0 00-.75 3.109c0 .927.1 1.841.289 2.724m0 0a11.948 11.948 0 014.498 2.537m0 0A8.997 8.997 0 0112 21" />
-            </svg>
-            <span>English</span>
-            <svg width={isMobile ? "10" : "12"} height={isMobile ? "10" : "12"} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-            </svg>
+          {/* ─── LANGUAGE DROPDOWN ─── */}
+          <div style={{ position: 'relative' }}>
+            <div
+              onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+              }}
+            >
+              <svg width={isMobile ? "14" : "16"} height={isMobile ? "14" : "16"} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .927-.1 1.841-.289 2.724m0 0a11.948 11.948 0 01-4.498 2.537m-8.693-5.37a8.959 8.959 0 00-.75 3.109c0 .927.1 1.841.289 2.724m0 0a11.948 11.948 0 014.498 2.537m0 0A8.997 8.997 0 0112 21" />
+              </svg>
+              <span>{selectedLang}</span>
+              <svg width={isMobile ? "10" : "12"} height={isMobile ? "10" : "12"} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+
+            {langDropdownOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '0.5rem',
+                  background: '#FFFFFF',
+                  color: '#1A1A1A',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                  minWidth: '140px',
+                  zIndex: 60,
+                  overflow: 'hidden',
+                  padding: '0.25rem 0',
+                }}
+              >
+                {languages.map((lang) => (
+                  <div
+                    key={lang.code}
+                    onClick={() => {
+                      setSelectedLang(lang.name);
+                      setLangDropdownOpen(false);
+                      console.log(`Language changed to: ${lang.code}`); // Placeholder for future implementation
+                    }}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s ease',
+                      background: selectedLang === lang.name ? '#F0F0F0' : 'transparent',
+                      fontWeight: selectedLang === lang.name ? 600 : 400,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedLang !== lang.name) {
+                        e.currentTarget.style.background = '#F8F8F8';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedLang !== lang.name) {
+                        e.currentTarget.style.background = 'transparent';
+                      }
+                    }}
+                  >
+                    {lang.name}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

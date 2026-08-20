@@ -211,6 +211,7 @@ export default function Home() {
     mediaList = [hotel.main_photo];
   }
   const [mediaIndex, setMediaIndex] = useState(0);
+  
   const getMediaUrl = (media: HotelMedia | null | undefined) => {
     if (!media) return undefined;
     const url = media.url || media?.attributes?.url;
@@ -225,12 +226,32 @@ export default function Home() {
     const mime = media.mime || media?.attributes?.mime;
     return mime?.startsWith('video/');
   };
+
+  // ─── Auto Slide Logic (Merged correctly here) ──────────────
+  const slideIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const startAutoSlide = () => {
+    if (slideIntervalRef.current) clearInterval(slideIntervalRef.current);
+    if (mediaList.length <= 1) return;
+    slideIntervalRef.current = setInterval(() => {
+      setMediaIndex((prev) => (prev + 1) % mediaList.length);
+    }, 4500); // Slides every 4.5 seconds.
+  };
+
+  // Reset timer whenever the index changes or mediaList updates
+  useEffect(() => {
+    startAutoSlide();
+    return () => {
+      if (slideIntervalRef.current) clearInterval(slideIntervalRef.current);
+    };
+  }, [mediaIndex, mediaList.length]);
+
   const handlePrevMedia = () => {
-    if (mediaList.length === 0) return;
+    if (slideIntervalRef.current) clearInterval(slideIntervalRef.current); // Stops timer on manual click
     setMediaIndex((prev) => (prev === 0 ? mediaList.length - 1 : prev - 1));
   };
   const handleNextMedia = () => {
-    if (mediaList.length === 0) return;
+    if (slideIntervalRef.current) clearInterval(slideIntervalRef.current); // Stops timer on manual click
     setMediaIndex((prev) => (prev === mediaList.length - 1 ? 0 : prev + 1));
   };
 
@@ -309,7 +330,6 @@ export default function Home() {
       link.href = fullUrl;
     }
   }, [hotel]);
-
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0A' }}>
