@@ -397,17 +397,16 @@ const handleSubmit = async (e: React.FormEvent) => {
               gap: '2rem',
             }}
           >
-            {/* LEFT: Room Summary */}
+            {/* ─── LEFT: Room Summary (UPDATED: FULL IMAGE CARD) ─── */}
             <ScrollReveal delay={100}>
               <div
                 style={{
                   background: '#FFFFFF',
                   borderRadius: '1.5rem',
-                  padding: '1.5rem',
+                  overflow: 'hidden',
                   boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '1rem',
                 }}
               >
                 {room.photos && room.photos.length > 0 ? (
@@ -416,8 +415,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       position: 'relative',
                       width: '100%',
                       height: isMobile ? '220px' : '300px',
-                      borderRadius: '1rem',
-                      overflow: 'hidden',
+                      flexShrink: 0,
                       background: '#F0F0F0',
                     }}
                   >
@@ -514,7 +512,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                       width: '100%',
                       height: isMobile ? '220px' : '300px',
                       background: '#F0F0F0',
-                      borderRadius: '1rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -524,7 +521,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                     No Room Image
                   </div>
                 )}
-                <div>
+                
+                {/* Added padding around the title section */}
+                <div style={{ padding: '1.5rem' }}>
                   <h3
                     style={{
                       fontSize: '1.3rem',
@@ -551,9 +550,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                   </p>
                 </div>
 
+                {/* Added padding around the pricing section */}
                 <div
                   style={{
                     borderTop: '1px solid #E8E8E8',
+                    padding: '1.5rem',
                     paddingTop: '1rem',
                     display: 'flex',
                     flexDirection: 'column',
@@ -595,7 +596,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               </div>
             </ScrollReveal>
 
-            {/* RIGHT: Form */}
+            {/* ─── RIGHT: Form (UNTOUCHED) ─── */}
             <ScrollReveal delay={300}>
               <form
                 onSubmit={handleSubmit}
