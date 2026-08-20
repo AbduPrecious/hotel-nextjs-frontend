@@ -346,7 +346,7 @@ export default function Home() {
               {mediaList.map((media, idx) => {
                 const mediaUrl = getMediaUrl(media);
                   return (
-    <div style={{ backgroundColor: '#FFFFFF', minHeight: '100vh' }}>
+                    <div
                   key={idx}
                   style={{
                     position: 'absolute',
@@ -355,7 +355,7 @@ export default function Home() {
                     opacity: idx === mediaIndex ? 1 : 0,
                     transition: 'opacity 1.2s ease-in-out',
                   }}
-                
+                >
                   {isVideo(media) ? (
                                            <video
                       src={mediaUrl}
