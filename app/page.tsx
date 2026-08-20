@@ -453,7 +453,7 @@ export default function Home() {
           )}
 
           {/* Hero Content */}
-                            <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '80px 1rem 0' : '0 1rem' }}>
+                                     <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '0 1rem' }}>
                        <h1 style={{ fontSize: isMobile ? '1.4rem' : '2.25rem', fontWeight: 'bold', color: '#FFFFFF', marginBottom: '0.5rem', textShadow: '0 2px 30px rgba(0,0,0,0.5)' }}>
               {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
             </h1>
