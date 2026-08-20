@@ -320,21 +320,16 @@ export default function Home() {
       </div>
     );
   }
-
   const hotelName = hotel?.name || 'Hotel';
 
   return (
-
-          <style>{`
+    <div style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
+      <style>{`
         html, body {
           background-color: #FFFFFF !important;
           margin: 0;
           padding: 0;
         }
-            `}</style>
-      {/* ✅ Removed paddingTop – now hero sits correctly */}
-      <div style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
-        <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
@@ -344,6 +339,8 @@ export default function Home() {
           cursor: pointer;
         }
       `}</style>
+
+     
 
       {/* ─── HERO (now with ScrollReveal & no padding) ─── */}
       <ScrollReveal delay={0}>
