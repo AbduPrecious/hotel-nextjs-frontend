@@ -355,7 +355,7 @@ export default function Home() {
                     opacity: idx === mediaIndex ? 1 : 0,
                     transition: 'opacity 1.2s ease-in-out',
                   }}
-                >
+                
                   {isVideo(media) ? (
                                            <video
                       src={mediaUrl}
