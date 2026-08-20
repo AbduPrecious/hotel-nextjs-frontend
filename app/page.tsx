@@ -344,7 +344,7 @@ export default function Home() {
 
       {/* ─── HERO (now with ScrollReveal & no padding) ─── */}
       <ScrollReveal delay={0}>
-                                  <section style={{ position: 'relative', height: isMobile ? '65dvh' : '100vh', minHeight: isMobile ? '450px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem', overflow: 'hidden', background: '#FFFFFF' }}>
+                                 <section style={{ position: 'relative', height: isMobile ? '55dvh' : '100vh', minHeight: isMobile ? '400px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem', overflow: 'hidden', background: '#FFFFFF' }}>
           {/* Dynamic Media Background */} 
           {mediaList.length > 0 ? (
             <>
@@ -368,23 +368,23 @@ export default function Home() {
                       loop
                       muted
                       playsInline
-                      style={{
+                                           style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: isMobile ? 'contain' : 'cover',
+                        objectFit: 'cover',
                         objectPosition: 'center',
                         filter: 'brightness(1.2)',
                       }}
                     />
                   ) : mediaUrl ? (
-                                          <Image
+                    <Image
                       src={mediaUrl}
                       alt={`${hotelName} - slide ${idx + 1}`}
-                      style={{
+                                           style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: isMobile ? 'contain' : 'cover',
-                        objectPosition: 'center',
+                        objectFit: 'cover', // 👈 Fills the entire section, killing the gap
+                        objectPosition: 'top center', // 👈 Keeps the top safe from navbar
                         transform: `translateY(${offsetY * 0.15}px)`,
                         filter: 'brightness(1.2)',
                       }}
@@ -476,13 +476,13 @@ export default function Home() {
 
    {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
 <ScrollReveal delay={200}>
-                       <section
+                          <section
     style={{
       position: 'relative',
       zIndex: 30,
       padding: isMobile ? '0 1rem' : '0 1rem',
       maxWidth: '1180px',
-      margin: isMobile ? '-15px 1rem 2rem' : '-30px auto 3rem',
+      margin: isMobile ? '-40px 1rem 2rem' : '-50px auto 3rem',
       backgroundColor: '#FFFFFF',
       colorScheme: 'light',
       forcedColorAdjust: 'none',
