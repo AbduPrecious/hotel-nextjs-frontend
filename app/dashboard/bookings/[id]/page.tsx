@@ -287,7 +287,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       <div style={{ minHeight: '100vh', background: BEIGE, paddingTop: '0px' }}>
         
         {/* ─── HERO SECTION (Touches navbar, updated text) ─── */}
-        <div className="contact-hero animate-in" style={{ paddingTop: isMobile ? '80px' : '95px', paddingBottom: isMobile ? '4rem' : '5rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
+        <div className="contact-hero animate-in" style={{ paddingTop: isMobile ? '150px' : '120px', paddingBottom: isMobile ? '4rem' : '5rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
           <div className="breadcrumb">
             <Link href="/">Home</Link>
             <span>/</span>
