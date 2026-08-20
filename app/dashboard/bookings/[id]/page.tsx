@@ -234,7 +234,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const bedType = roomData?.bed_type || '—';
 
    return (
-    <div style={{ minHeight: '100vh', background: BEIGE, paddingTop: isMobile ? '5rem' : '6.5rem' }}>
+    <div style={{ minHeight: '100vh', background: BEIGE, paddingTop: isMobile ? '6.5rem' : '8rem' }}>
       <style>{`
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
