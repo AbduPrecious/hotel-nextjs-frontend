@@ -470,17 +470,17 @@ export default function Home() {
 
    {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
 <ScrollReveal delay={200}>
-     <section
+        <section
     style={{
       position: 'relative',
       zIndex: 30,
-      marginTop: isMobile ? '-20px' : '-50px',
+      marginTop: isMobile ? '35px' : '-50px',
       padding: isMobile ? '0 1rem' : '0 1rem',
       maxWidth: '1180px',
-      margin: isMobile ? '-20px 1rem 2rem' : '-50px auto 3rem',
+      margin: isMobile ? '35px 1rem 2rem' : '-50px auto 3rem',
       backgroundColor: '#FFFFFF',
-      colorScheme: 'light', // 👈 Forces light mode inputs (fixes black background)
-      forcedColorAdjust: 'none', // 👈 Prevents browser dark mode from overriding
+      colorScheme: 'light',
+      forcedColorAdjust: 'none',
       borderRadius: '4px',
       boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
     }}
