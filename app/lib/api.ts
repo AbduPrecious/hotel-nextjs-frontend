@@ -45,11 +45,11 @@ export async function getHotelDetails() {
 
 export async function getAvailableRooms(featuredOnly: boolean = false) {
   try {
-    let url = `${API_URL}/rooms?filters[available][$eq]=true&populate=*`;
+    // 👇 We added `&populate[bookings]=true` so the frontend can see the bookings
+    let url = `${API_URL}/rooms?filters[available][$eq]=true&populate[bookings]=true`;
 
-    // If featuredOnly is true, add the featured filter
     if (featuredOnly) {
-      url = `${API_URL}/rooms?filters[available][$eq]=true&filters[featured][$eq]=true&populate=*`;
+      url = `${API_URL}/rooms?filters[available][$eq]=true&filters[featured][$eq]=true&populate[bookings]=true`;
     }
 
     const res = await fetch(url);

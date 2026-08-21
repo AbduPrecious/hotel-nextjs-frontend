@@ -503,11 +503,40 @@ function RoomsContent() {
               const roomData = room?.attributes || room;
               const photos = roomData?.photos || [];
               const imageUrl = photos.length > 0 ? photos[0]?.url : null;
-              const roomNumber = String(idx + 1).padStart(2, '0');
+                          const roomNumber = String(idx + 1).padStart(2, '0');
+
+              // ─── NEW: Check if room is booked for selected dates ───
+              const isBooked = checkIn && checkOut && roomData.bookings?.some((booking: any) => {
+                const status = booking.booking_status || booking.status || 'Pending';
+                if (status.toLowerCase() !== 'pending' && status.toLowerCase() !== 'approved') return false;
+                const newIn = new Date(checkIn).getTime();
+                const newOut = new Date(checkOut).getTime();
+                const existingIn = new Date(booking.check_in).getTime();
+                const existingOut = new Date(booking.check_out).getTime();
+                return newIn < existingOut && newOut > existingIn;
+              }) ?? false;
+              // ──────────────────────────────────────────────────────
 
               return (
                 <ScrollReveal key={room.documentId || room.id || idx} delay={idx * 80}>
-                  <div className="room-card">
+                  <div className="room-card" style={{ position: 'relative' }}>
+                    
+                    {/* ─── NEW: Unavailable Overlay Message ─── */}
+                    {isBooked && (
+                      <div style={{
+                        position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.92)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        borderRadius: '1rem', textAlign: 'center', padding: '1rem', zIndex: 20
+                      }}>
+                        <h4 style={{ color: '#FF6B6B', marginBottom: '0.5rem', fontSize: '1.2rem' }}>Unavailable</h4>
+                        <p style={{ fontSize: '0.9rem', color: '#555' }}>
+                          This room is unavailable at this time
+                          <br />({new Date(checkIn).toLocaleDateString()} - {new Date(checkOut).toLocaleDateString()}).
+                          <br />Please book another room.
+                        </p>
+                      </div>
+                    )}
+                    {/* ────────────────────────────────────────────── */}
                     <div className="image-wrapper">
                       {imageUrl ? (
                         <img
