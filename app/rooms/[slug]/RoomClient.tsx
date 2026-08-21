@@ -36,73 +36,14 @@ function ImageLightbox({ images, initialIndex, onClose }: {
       }}
       onClick={onClose}
     >
-      <button
-        onClick={onClose}
-        style={{
-          position: 'absolute',
-          top: '1rem',
-          right: '1rem',
-          color: 'white',
-          fontSize: '2rem',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          zIndex: 1000,
-        }}
-      >
-        ✕
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); goToPrev(); }}
-        style={{
-          position: 'absolute',
-          left: '1rem',
-          color: 'white',
-          fontSize: '2.5rem',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          zIndex: 1000,
-        }}
-      >
-        ‹
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); goToNext(); }}
-        style={{
-          position: 'absolute',
-          right: '1rem',
-          color: 'white',
-          fontSize: '2.5rem',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          zIndex: 1000,
-        }}
-      >
-        ›
-      </button>
-      <div
-        style={{ maxWidth: '1024px', maxHeight: '90vh', width: '100%', height: '100%', position: 'relative' }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <button onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', color: 'white', fontSize: '2rem', background: 'none', border: 'none', cursor: 'pointer', zIndex: 1000 }}>✕</button>
+      <button onClick={(e) => { e.stopPropagation(); goToPrev(); }} style={{ position: 'absolute', left: '1rem', color: 'white', fontSize: '2.5rem', background: 'none', border: 'none', cursor: 'pointer', zIndex: 1000 }}>‹</button>
+      <button onClick={(e) => { e.stopPropagation(); goToNext(); }} style={{ position: 'absolute', right: '1rem', color: 'white', fontSize: '2.5rem', background: 'none', border: 'none', cursor: 'pointer', zIndex: 1000 }}>›</button>
+      <div style={{ maxWidth: '1024px', maxHeight: '90vh', width: '100%', height: '100%', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
         {currentImage && (
-          <img
-            src={`${STRAPI_URL}${currentImage.url}`}
-            alt={currentImage.alternativeText || 'Room image'}
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-          />
+          <img src={`${STRAPI_URL}${currentImage.url}`} alt={currentImage.alternativeText || 'Room image'} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         )}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '1rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            color: 'rgba(255,255,255,0.7)',
-            fontSize: '0.85rem',
-          }}
-        >
+        <div style={{ position: 'absolute', bottom: '1rem', left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>
           {currentIndex + 1} / {images.length}
         </div>
       </div>
@@ -114,7 +55,6 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
   const router = useRouter();
   const { showAlert } = useAlert();
 
-  // ─── Responsive Breakpoint Hook ──────────────────────────────
   const [screenWidth, setScreenWidth] = useState(0);
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -123,7 +63,6 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   const isMobile = screenWidth < 768;
-  // ──────────────────────────────────────────────────────────────
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -134,6 +73,27 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
   const amenities = roomData?.amenities || [];
   const detailsHtml = renderRichText(roomData?.details);
 
+  // ─── NEW: BOOKING CHECK LOGIC ──────────────────────────────────
+  const [isRoomBooked, setIsRoomBooked] = useState(false);
+  const [bookingsForRoom, setBookingsForRoom] = useState<any[]>([]);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  useEffect(() => {
+    async function fetchBookings() {
+      const roomId = roomData?.documentId || roomData?.id;
+      if (!roomId) return;
+      try {
+        const res = await fetch(`${STRAPI_URL}/api/bookings?filters[room][documentId][$eq]=${roomId}&populate=room`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setBookingsForRoom(data.data || []);
+      } catch (error) {
+        console.error("Failed to fetch bookings", error);
+      }
+    }
+    fetchBookings();
+  }, [roomData]);
+
   // ─── Simplified Form State ──────────────────────────────────
   const [formData, setFormData] = useState({
     name: '',
@@ -142,6 +102,29 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
     check_in: '',
     check_out: '',
   });
+
+  // ─── NEW: Check if dates conflict when user changes them ───
+  useEffect(() => {
+    if (!formData.check_in || !formData.check_out) {
+      setIsRoomBooked(false);
+      return;
+    }
+
+    const newIn = new Date(formData.check_in).getTime();
+    const newOut = new Date(formData.check_out).getTime();
+
+    const hasOverlap = bookingsForRoom.some((booking: any) => {
+      const status = booking.booking_status || booking.status || 'Pending';
+      if (status.toLowerCase() !== 'pending' && status.toLowerCase() !== 'approved') return false;
+      
+      const existingIn = new Date(booking.check_in).getTime();
+      const existingOut = new Date(booking.check_out).getTime();
+
+      return newIn < existingOut && newOut > existingIn;
+    });
+
+    setIsRoomBooked(hasOverlap);
+  }, [formData.check_in, formData.check_out, bookingsForRoom]);
 
   const calculateDetails = () => {
     if (!formData.check_in || !formData.check_out) return { nights: 0, total: 0 };
@@ -158,7 +141,7 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-   // ─── Redirect to Checkout Page ──────────────────────────────
+  // ─── Redirect to Checkout Page ──────────────────────────────
   const handleProceedToCheckout = () => {
     // 1. Required fields validation
     if (!formData.name || !formData.email || !formData.phone || !formData.check_in || !formData.check_out) {
@@ -166,7 +149,7 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
       return;
     }
 
-    // 2. ✅ Date validation (Check-out must be strictly after Check-in)
+    // 2. Date validation
     const checkInDate = new Date(formData.check_in);
     const checkOutDate = new Date(formData.check_out);
     if (checkOutDate <= checkInDate) {
@@ -174,16 +157,22 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
       return;
     }
 
-    // 3. Redirect to Checkout with parameters (INCLUDING NAME, EMAIL, PHONE)
+    // ─── NEW: BLOCK IF ROOM IS BOOKED ───
+    if (isRoomBooked) {
+      showAlert('Sorry, this room has just been booked for those dates. Please choose different dates or another room.', 'error');
+      return;
+    }
+
+    // 3. Redirect to Checkout with parameters
     const params = new URLSearchParams({
       roomId: roomData.documentId || roomData.id,
       checkIn: formData.check_in,
       checkOut: formData.check_out,
       adults: '1',
       children: '0',
-      name: formData.name,       // ✅ Added to pass to checkout
-      email: formData.email,     // ✅ Added to pass to checkout
-      phone: formData.phone,     // ✅ Added to pass to checkout
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
     });
 
     router.push(`/checkout?${params.toString()}`);
@@ -202,89 +191,21 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
         }
         .animate-in { animation: fadeInUp 0.8s ease forwards; opacity: 0; }
 
-        /* ─── Contact-style hero ──────────────────────────────── */
-        .contact-hero {
-          background: ${DARK_NAVY};
-          padding: 3rem 1rem;
-          text-align: center;
-          border-bottom: 3px solid ${GOLD};
-        }
-        .contact-hero .breadcrumb {
-          font-size: 0.7rem;
-          color: ${GOLD};
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          margin-bottom: 0.5rem;
-        }
-        .contact-hero .breadcrumb a {
-          color: ${GOLD};
-          text-decoration: none;
-          transition: color 0.3s ease;
-        }
+        .contact-hero { background: ${DARK_NAVY}; padding: 3rem 1rem; text-align: center; border-bottom: 3px solid ${GOLD}; }
+        .contact-hero .breadcrumb { font-size: 0.7rem; color: ${GOLD}; display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+        .contact-hero .breadcrumb a { color: ${GOLD}; text-decoration: none; transition: color 0.3s ease; }
         .contact-hero .breadcrumb a:hover { color: white; }
-        .contact-hero h1 {
-          font-size: 2.5rem;
-          font-weight: 700;
-          color: white;
-          margin-bottom: 0.25rem;
-          letter-spacing: 0.02em;
-        }
-        .contact-hero p {
-          font-size: 0.9rem;
-          color: rgba(255,255,255,0.7);
-          max-width: 672px;
-          margin: 0 auto;
-          font-weight: 300;
-          line-height: 1.6;
-        }
-        @media (max-width: 768px) {
-          .contact-hero h1 { font-size: 2rem; }
-        }
+        .contact-hero h1 { font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 0.25rem; letter-spacing: 0.02em; }
+        .contact-hero p { font-size: 0.9rem; color: rgba(255,255,255,0.7); max-width: 672px; margin: 0 auto; font-weight: 300; line-height: 1.6; }
+        @media (max-width: 768px) { .contact-hero h1 { font-size: 2rem; } }
 
-        .form-input {
-          width: 100%;
-          padding: 0.5rem 0.75rem;
-          border: 1px solid #E0E0E0;
-          border-radius: 0.5rem;
-          font-size: 0.9rem;
-          outline: none;
-          transition: all 0.3s ease;
-          background: #FAFAFA;
-          color: #1A1A1A;
-        }
-        .form-input:focus {
-          border-color: ${GOLD};
-          background: #FFFFFF;
-        }
-        .book-btn {
-          width: 100%;
-          background: ${DARK_NAVY};
-          color: #FFFFFF;
-          padding: 0.8rem;
-          border: none;
-          border-radius: 0.5rem;
-          font-size: 0.8rem;
-          font-weight: 600;
-          letter-spacing: 0.08em;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        .book-btn:hover {
-          background: ${GOLD};
-          transform: scale(1.02);
-        }
-        .book-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
+        .form-input { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #E0E0E0; border-radius: 0.5rem; font-size: 0.9rem; outline: none; transition: all 0.3s ease; background: #FAFAFA; color: #1A1A1A; }
+        .form-input:focus { border-color: ${GOLD}; background: #FFFFFF; }
+        .book-btn { width: 100%; background: ${DARK_NAVY}; color: #FFFFFF; padding: 0.8rem; border: none; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; cursor: pointer; transition: all 0.3s ease; }
+        .book-btn:hover:not(:disabled) { background: ${GOLD}; transform: scale(1.02); }
+        .book-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
       `}</style>
 
-      {/* ─── HERO (Contact page style) ─── */}
       <div className="contact-hero animate-in" style={{ padding: isMobile ? '4rem 1rem' : '5rem 1rem' }}>
         <div className="breadcrumb">
           <Link href="/">Home</Link>
@@ -296,7 +217,6 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
         <h1>{roomData.title}</h1>
         <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <GuestIcon size={16} color="rgba(255,255,255,0.7)" /> {roomData.capacity || 4} Guests
-         
           <BedIcon size={16} color="rgba(255,255,255,0.7)" /> {roomData.bed_type || '2 Bedrooms'}
         </p>
       </div>
@@ -311,26 +231,12 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
                   <div style={{ position: 'absolute', bottom: '1rem', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.6)', color: 'white', padding: '0.2rem 0.8rem', borderRadius: '9999px', fontSize: '0.8rem' }}>
                     {currentPhotoIndex + 1} / {photos.length}
                   </div>
-                  <button onClick={goToPrevPhoto} style={{
-                    position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)',
-                    background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%',
-                    width: isMobile ? '32px' : '40px', height: isMobile ? '32px' : '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'white', cursor: 'pointer', transition: 'all 0.3s ease', zIndex: 5, fontSize: '1.2rem'
-                  }} onMouseEnter={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = '#1A1A1A'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.5)'; e.currentTarget.style.color = 'white'; }}>‹</button>
-                  <button onClick={goToNextPhoto} style={{
-                    position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)',
-                    background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%',
-                    width: isMobile ? '32px' : '40px', height: isMobile ? '32px' : '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'white', cursor: 'pointer', transition: 'all 0.3s ease', zIndex: 5, fontSize: '1.2rem'
-                  }} onMouseEnter={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = '#1A1A1A'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.5)'; e.currentTarget.style.color = 'white'; }}>›</button>
+                  <button onClick={goToPrevPhoto} style={{ position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: isMobile ? '32px' : '40px', height: isMobile ? '32px' : '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer', transition: 'all 0.3s ease', zIndex: 5, fontSize: '1.2rem' }} onMouseEnter={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = '#1A1A1A'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.5)'; e.currentTarget.style.color = 'white'; }}>‹</button>
+                  <button onClick={goToNextPhoto} style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: isMobile ? '32px' : '40px', height: isMobile ? '32px' : '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer', transition: 'all 0.3s ease', zIndex: 5, fontSize: '1.2rem' }} onMouseEnter={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = '#1A1A1A'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.5)'; e.currentTarget.style.color = 'white'; }}>›</button>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', padding: isMobile ? '0.5rem 0.75rem' : '0.75rem', overflowX: 'auto', background: '#F8F8F8', scrollbarWidth: 'thin' }}>
                   {photos.map((photo: any, idx: number) => (
-                    <div key={idx} onClick={() => setCurrentPhotoIndex(idx)} style={{
-                      width: isMobile ? '50px' : '70px', height: isMobile ? '35px' : '50px', flexShrink: 0, borderRadius: '0.4rem', overflow: 'hidden', cursor: 'pointer',
-                      border: idx === currentPhotoIndex ? `2px solid ${GOLD}` : '2px solid transparent',
-                      transition: 'all 0.3s ease', opacity: idx === currentPhotoIndex ? 1 : 0.5
-                    }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = idx === currentPhotoIndex ? '1' : '0.5'; }}>
+                    <div key={idx} onClick={() => setCurrentPhotoIndex(idx)} style={{ width: isMobile ? '50px' : '70px', height: isMobile ? '35px' : '50px', flexShrink: 0, borderRadius: '0.4rem', overflow: 'hidden', cursor: 'pointer', border: idx === currentPhotoIndex ? `2px solid ${GOLD}` : '2px solid transparent', transition: 'all 0.3s ease', opacity: idx === currentPhotoIndex ? 1 : 0.5 }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = idx === currentPhotoIndex ? '1' : '0.5'; }}>
                       <img src={`${STRAPI_URL}${photo.url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   ))}
@@ -356,7 +262,6 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
             )}
           </div>
 
-          {/* ─── SIMPLIFIED BOOKING FORM ───────────────────────── */}
           <div style={{ position: isMobile ? 'relative' : 'sticky', top: isMobile ? 'auto' : '80px', alignSelf: 'start' }}>
             <div style={{ background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: '1rem', padding: isMobile ? '1.25rem' : '1.5rem 1.5rem 2rem', boxShadow: '0 10px 40px rgba(0,0,0,0.08)' }}>
               <div style={{ textAlign: 'center', paddingBottom: '1rem', borderBottom: '1px solid #E8E8E8', marginBottom: '1.5rem' }}>
@@ -386,6 +291,12 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
                   <input type="date" name="check_out" value={formData.check_out} onChange={handleChange} required className="form-input" />
                 </div>
 
+                {isRoomBooked && (
+                  <div style={{ background: '#FFEBEB', border: '1px solid #FF6B6B', color: '#D32F2F', padding: '0.75rem', borderRadius: '0.5rem', fontSize: '0.8rem', textAlign: 'center', fontWeight: 600 }}>
+                    ⚠️ Room already booked for these dates. Please select other dates.
+                  </div>
+                )}
+
                 {nights > 0 && (
                   <div style={{ background: DARK_NAVY, padding: '0.75rem', borderRadius: '0.5rem', textAlign: 'center' }}>
                     <span style={{ fontSize: '1rem', fontWeight: 700, color: GOLD }}>Total: ETB {total}</span>
@@ -393,13 +304,13 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
                   </div>
                 )}
 
-                {/* ─── REDIRECT BUTTON ─────────────────────────── */}
                 <button 
                   type="button" 
                   onClick={handleProceedToCheckout} 
                   className="book-btn"
+                  disabled={isRoomBooked}
                 >
-                  PROCEED TO CHECKOUT
+                  {isRoomBooked ? 'ROOM UNAVAILABLE' : 'PROCEED TO CHECKOUT'}
                 </button>
               </form>
             </div>
