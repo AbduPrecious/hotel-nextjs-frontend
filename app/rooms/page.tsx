@@ -505,8 +505,7 @@ function RoomsContent() {
               const imageUrl = photos.length > 0 ? photos[0]?.url : null;
                           const roomNumber = String(idx + 1).padStart(2, '0');
 
-              // ─── NEW: Check if room is booked for selected dates ───
-              const isBooked = checkIn && checkOut && roomData.bookings?.some((booking: any) => {
+                           const isBooked = (checkIn && checkOut && roomData.bookings?.some((booking: any) => {
                 const status = booking.booking_status || booking.status || 'Pending';
                 if (status.toLowerCase() !== 'pending' && status.toLowerCase() !== 'approved') return false;
                 const newIn = new Date(checkIn).getTime();
@@ -514,8 +513,7 @@ function RoomsContent() {
                 const existingIn = new Date(booking.check_in).getTime();
                 const existingOut = new Date(booking.check_out).getTime();
                 return newIn < existingOut && newOut > existingIn;
-              }) ?? false;
-              // ──────────────────────────────────────────────────────
+              })) ?? false;
 
               return (
                 <ScrollReveal key={room.documentId || room.id || idx} delay={idx * 80}>
