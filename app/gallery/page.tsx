@@ -34,7 +34,7 @@ function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; dela
   return <div ref={ref}>{children}</div>;
 }
 
-// ─── MODAL (UPDATED WITH PREV/NEXT ARROWS) ────────────────────────────────
+// ─── MODAL (KEEPS PREV/NEXT ARROWS ONLY) ────────────────────────────────
 function MediaModal({ item, onClose, onPrev, onNext }: { item: any; onClose: () => void; onPrev: () => void; onNext: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -190,13 +190,9 @@ export default function GalleryPage() {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
   
-  // ─── NEW: Modal navigation state ─────────────────────
+  // ─── Modal navigation state (KEPT) ─────────────────────
   const [selectedItemIndex, setSelectedItemIndex] = useState(0);
 
-  // ─── CAROUSEL STATES ─────────────────────────────
-  const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = isMobile ? 1 : 3; // Show 3 images on desktop, 1 on mobile
-  
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     setIsMobile(window.innerWidth < 768);
@@ -242,14 +238,13 @@ export default function GalleryPage() {
     ? items
     : items.filter((item) => item.Category === selectedCategory);
 
-  // ─── NEW: Updated openMedia to track index ─────────────
+  // ─── Modal Preview (KEPT) ─────────────────────────────
   const openMedia = (item: any, idx: number) => {
     setSelectedItemIndex(idx);
     setSelectedItem(item);
     setModalOpen(true);
   };
 
-  // ─── NEW: Modal Prev/Next Handlers ─────────────────────
   const handleModalNext = () => {
     const nextIndex = (selectedItemIndex + 1) % filteredItems.length;
     setSelectedItemIndex(nextIndex);
@@ -260,32 +255,6 @@ export default function GalleryPage() {
     const prevIndex = (selectedItemIndex - 1 + filteredItems.length) % filteredItems.length;
     setSelectedItemIndex(prevIndex);
     setSelectedItem(filteredItems[prevIndex]);
-  };
-
-  // ─── CAROUSEL LOGIC (UNTOUCHED) ─────────────────────────────
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const currentItems = filteredItems.slice(currentPage * itemsPerPage, currentPage * itemsPerPage + itemsPerPage);
-
-  // Reset to first page when category changes
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [selectedCategory]);
-
-  // Auto-slide effect
-  useEffect(() => {
-    if (filteredItems.length <= itemsPerPage) return;
-    const timer = setInterval(() => {
-      setCurrentPage((prev) => (prev + 1) % totalPages);
-    }, 4000); // Slides every 4 seconds
-    return () => clearInterval(timer);
-  }, [selectedCategory, filteredItems.length, itemsPerPage, totalPages]);
-
-  const goToNext = () => {
-    setCurrentPage((prev) => (prev + 1) % totalPages);
-  };
-
-  const goToPrev = () => {
-    setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages);
   };
 
   if (loading) {
@@ -405,10 +374,9 @@ export default function GalleryPage() {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 1.5rem;
-          padding: 2.5rem 1rem 1rem;
+          padding: 2.5rem 1rem 4.5rem;
           max-width: 1200px;
           margin: 0 auto;
-          transition: opacity 0.3s ease;
         }
         .gallery-item {
           position: relative;
@@ -545,7 +513,7 @@ export default function GalleryPage() {
           .gallery-grid { 
             grid-template-columns: 1fr;
             gap: 1rem;
-            padding: 2rem 1rem 1rem;
+            padding: 2rem 1rem;
           }
           .filter-bar-inner { gap: 1rem; }
           .filter-btn { font-size: 0.75rem; }
@@ -578,93 +546,43 @@ export default function GalleryPage() {
         </div>
       </div>
 
-      {/* ─── GRID ─── */}
+      {/* ─── GRID (ALL ITEMS SHOWN AT ONCE, NO PAGINATION) ─── */}
       {filteredItems.length > 0 ? (
-        <>
-          <div className="gallery-grid">
-            {currentItems.map((item, idx) => {
-              const isVideo = item.type === 'video';
-              const mediaUrl = isVideo
-                ? `${STRAPI_URL}${item.video?.url}`
-                : (item.image?.url ? `${STRAPI_URL}${item.image.url}` : null);
-              
-              // Calculate the absolute index within the filteredItems array
-              const absoluteIndex = currentPage * itemsPerPage + idx;
+        <div className="gallery-grid">
+          {filteredItems.map((item, idx) => {
+            const isVideo = item.type === 'video';
+            const mediaUrl = isVideo
+              ? `${STRAPI_URL}${item.video?.url}`
+              : (item.image?.url ? `${STRAPI_URL}${item.image.url}` : null);
 
-              return (
-                <ScrollReveal key={item.documentId || absoluteIndex} delay={idx * 60}>
-                  <div className="gallery-item" onClick={() => openMedia(item, absoluteIndex)}>
-                    {mediaUrl ? (
-                      isVideo ? (
-                        <video src={mediaUrl} muted loop playsInline style={{ pointerEvents: 'none' }} />
-                      ) : (
-                        <img src={mediaUrl} alt={item.Title || 'Gallery media'} />
-                      )
+            return (
+              <ScrollReveal key={item.documentId || idx} delay={idx * 60}>
+                <div className="gallery-item" onClick={() => openMedia(item, idx)}>
+                  {mediaUrl ? (
+                    isVideo ? (
+                      <video src={mediaUrl} muted loop playsInline style={{ pointerEvents: 'none' }} />
                     ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#CCC', background: '#E0DDD7', fontSize: '2rem' }}>
-                        {isVideo ? '🎬' : '🖼️'}
-                      </div>
-                    )}
-                    
-                    {/* Carmelina Luxury Overlay */}
-                    <div className="overlay">
-                      <div className="action-icon">
-                        {isVideo ? '▶' : '+'}
-                      </div>
-                      {item.Title && <h3 className="title">{item.Title}</h3>}
-                      {item.Category && <span className="category-tag">{item.Category}</span>}
+                      <img src={mediaUrl} alt={item.Title || 'Gallery media'} />
+                    )
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#CCC', background: '#E0DDD7', fontSize: '2rem' }}>
+                      {isVideo ? '🎬' : '🖼️'}
                     </div>
+                  )}
+                  
+                  {/* Carmelina Luxury Overlay */}
+                  <div className="overlay">
+                    <div className="action-icon">
+                      {isVideo ? '▶' : '+'}
+                    </div>
+                    {item.Title && <h3 className="title">{item.Title}</h3>}
+                    {item.Category && <span className="category-tag">{item.Category}</span>}
                   </div>
-                </ScrollReveal>
-              );
-            })}
-          </div>
-
-          {/* ─── SLIDER CONTROLS (UNTOUCHED) ─── */}
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', paddingBottom: '3rem' }}>
-              <button 
-                onClick={goToPrev}
-                style={{
-                  background: DARK_NAVY, color: '#FFFFFF', border: 'none', width: '40px', height: '40px', 
-                  borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                  transition: 'all 0.3s ease', fontSize: '1.2rem'
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = DARK_NAVY; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = DARK_NAVY; e.currentTarget.style.color = '#FFFFFF'; }}
-              >‹</button>
-
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {Array.from({ length: totalPages }).map((_, idx) => (
-                  <button 
-                    key={idx}
-                    onClick={() => setCurrentPage(idx)}
-                    style={{
-                      width: idx === currentPage ? '20px' : '8px',
-                      height: '8px',
-                      borderRadius: '4px',
-                      background: idx === currentPage ? GOLD : '#CCCCCC',
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease'
-                    }}
-                  />
-                ))}
-              </div>
-
-              <button 
-                onClick={goToNext}
-                style={{
-                  background: DARK_NAVY, color: '#FFFFFF', border: 'none', width: '40px', height: '40px', 
-                  borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                  transition: 'all 0.3s ease', fontSize: '1.2rem'
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = DARK_NAVY; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = DARK_NAVY; e.currentTarget.style.color = '#FFFFFF'; }}
-              >›</button>
-            </div>
-          )}
-        </>
+                </div>
+              </ScrollReveal>
+            );
+          })}
+        </div>
       ) : (
         <div className="empty-state">
           <div className="icon">🖼️</div>
@@ -677,7 +595,7 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {/* ─── MODAL (UPDATED WITH PREV/NEXT PROPS) ─── */}
+      {/* ─── MODAL (ONLY WITH PREV/NEXT) ─── */}
       {modalOpen && selectedItem && (
         <MediaModal 
           item={selectedItem} 
