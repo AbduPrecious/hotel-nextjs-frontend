@@ -34,7 +34,7 @@ function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; dela
   return <div ref={ref}>{children}</div>;
 }
 
-// ─── MODAL (KEEPS PREV/NEXT ARROWS ONLY) ────────────────────────────────
+// ─── MODAL (UPDATED WITH KEYBOARD NAVIGATION) ────────────────────────────────
 function MediaModal({ item, onClose, onPrev, onNext }: { item: any; onClose: () => void; onPrev: () => void; onNext: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -43,6 +43,22 @@ function MediaModal({ item, onClose, onPrev, onNext }: { item: any; onClose: () 
       videoRef.current.play();
     }
   }, [item]);
+
+  // ─── NEW: KEYBOARD NAVIGATION ─────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        onPrev();
+      } else if (e.key === 'ArrowRight') {
+        onNext();
+      } else if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onPrev, onNext, onClose]);
+  // ───────────────────────────────────────────────────
 
   if (!item) return null;
 
@@ -181,7 +197,6 @@ function MediaModal({ item, onClose, onPrev, onNext }: { item: any; onClose: () 
     </div>
   );
 }
-
 export default function GalleryPage() {
   const [items, setItems] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(false);
