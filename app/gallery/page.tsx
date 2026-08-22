@@ -34,8 +34,8 @@ function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; dela
   return <div ref={ref}>{children}</div>;
 }
 
-// ─── MODAL ────────────────────────────────────────────────
-function MediaModal({ item, onClose }: { item: any; onClose: () => void }) {
+// ─── MODAL (UPDATED WITH PREV/NEXT ARROWS) ────────────────────────────────
+function MediaModal({ item, onClose, onPrev, onNext }: { item: any; onClose: () => void; onPrev: () => void; onNext: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -62,6 +62,7 @@ function MediaModal({ item, onClose }: { item: any; onClose: () => void }) {
       }}
       onClick={onClose}
     >
+      {/* ─── CLOSE BUTTON ─── */}
       <button
         onClick={onClose}
         style={{
@@ -80,6 +81,62 @@ function MediaModal({ item, onClose }: { item: any; onClose: () => void }) {
         onMouseLeave={(e) => (e.currentTarget.style.color = 'white')}
       >
         ✕
+      </button>
+
+      {/* ─── PREVIOUS BUTTON ─── */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onPrev(); }}
+        style={{
+          position: 'absolute',
+          left: '1rem',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          color: 'white',
+          fontSize: '2.5rem',
+          background: 'rgba(21,35,46,0.6)',
+          border: '1px solid rgba(168,146,121,0.5)',
+          borderRadius: '50%',
+          width: '50px',
+          height: '50px',
+          cursor: 'pointer',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = DARK_NAVY; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(21,35,46,0.6)'; e.currentTarget.style.color = 'white'; }}
+      >
+        ‹
+      </button>
+
+      {/* ─── NEXT BUTTON ─── */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onNext(); }}
+        style={{
+          position: 'absolute',
+          right: '1rem',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          color: 'white',
+          fontSize: '2.5rem',
+          background: 'rgba(21,35,46,0.6)',
+          border: '1px solid rgba(168,146,121,0.5)',
+          borderRadius: '50%',
+          width: '50px',
+          height: '50px',
+          cursor: 'pointer',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = DARK_NAVY; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(21,35,46,0.6)'; e.currentTarget.style.color = 'white'; }}
+      >
+        ›
       </button>
 
       <div
@@ -132,7 +189,14 @@ export default function GalleryPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  
+  // ─── NEW: Modal navigation state ─────────────────────
+  const [selectedItemIndex, setSelectedItemIndex] = useState(0);
 
+  // ─── CAROUSEL STATES ─────────────────────────────
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = isMobile ? 1 : 3; // Show 3 images on desktop, 1 on mobile
+  
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     setIsMobile(window.innerWidth < 768);
@@ -178,9 +242,50 @@ export default function GalleryPage() {
     ? items
     : items.filter((item) => item.Category === selectedCategory);
 
-  const openMedia = (item: any) => {
+  // ─── NEW: Updated openMedia to track index ─────────────
+  const openMedia = (item: any, idx: number) => {
+    setSelectedItemIndex(idx);
     setSelectedItem(item);
     setModalOpen(true);
+  };
+
+  // ─── NEW: Modal Prev/Next Handlers ─────────────────────
+  const handleModalNext = () => {
+    const nextIndex = (selectedItemIndex + 1) % filteredItems.length;
+    setSelectedItemIndex(nextIndex);
+    setSelectedItem(filteredItems[nextIndex]);
+  };
+
+  const handleModalPrev = () => {
+    const prevIndex = (selectedItemIndex - 1 + filteredItems.length) % filteredItems.length;
+    setSelectedItemIndex(prevIndex);
+    setSelectedItem(filteredItems[prevIndex]);
+  };
+
+  // ─── CAROUSEL LOGIC (UNTOUCHED) ─────────────────────────────
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const currentItems = filteredItems.slice(currentPage * itemsPerPage, currentPage * itemsPerPage + itemsPerPage);
+
+  // Reset to first page when category changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [selectedCategory]);
+
+  // Auto-slide effect
+  useEffect(() => {
+    if (filteredItems.length <= itemsPerPage) return;
+    const timer = setInterval(() => {
+      setCurrentPage((prev) => (prev + 1) % totalPages);
+    }, 4000); // Slides every 4 seconds
+    return () => clearInterval(timer);
+  }, [selectedCategory, filteredItems.length, itemsPerPage, totalPages]);
+
+  const goToNext = () => {
+    setCurrentPage((prev) => (prev + 1) % totalPages);
+  };
+
+  const goToPrev = () => {
+    setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages);
   };
 
   if (loading) {
@@ -245,7 +350,7 @@ export default function GalleryPage() {
           line-height: 1.6;
         }
 
-        /* ─── CARMELINA FILTER TABS ────────────────────────── */
+        /* ─── FILTER TABS ────────────────────────── */
         .filter-bar {
           max-width: 1200px;
           margin: 2rem auto 0;
@@ -295,18 +400,19 @@ export default function GalleryPage() {
           color: ${DARK_NAVY};
         }
 
-        /* ─── CARMELINA GALLERY GRID ────────────────────────── */
+        /* ─── GRID ────────────────────────── */
         .gallery-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 1.5rem;
-          padding: 2.5rem 1rem 4.5rem;
+          padding: 2.5rem 1rem 1rem;
           max-width: 1200px;
           margin: 0 auto;
+          transition: opacity 0.3s ease;
         }
         .gallery-item {
           position: relative;
-          border-radius: 0px; /* Sharp luxury edges */
+          border-radius: 0px;
           overflow: hidden;
           background: #EBE8E3;
           cursor: pointer;
@@ -323,14 +429,13 @@ export default function GalleryPage() {
 
         .gallery-item:hover img,
         .gallery-item:hover video {
-          transform: scale(1.08); /* Carmelina smooth zoom */
+          transform: scale(1.08);
         }
 
-        /* ─── CARMELINA OVERLAY & HOVER FRAME ───────────────── */
         .gallery-item .overlay {
           position: absolute;
           inset: 0;
-          background: rgba(21, 35, 46, 0.65); /* Dark tint */
+          background: rgba(21, 35, 46, 0.65);
           opacity: 0;
           transition: opacity 0.5s ease;
           display: flex;
@@ -342,7 +447,6 @@ export default function GalleryPage() {
           z-index: 2;
         }
 
-        /* Border frame effect inside overlay */
         .gallery-item .overlay::before {
           content: '';
           position: absolute;
@@ -363,7 +467,6 @@ export default function GalleryPage() {
           transform: scale(1);
         }
 
-        /* Center Icon (Magnifying Glass / Play) */
         .gallery-item .action-icon {
           width: 48px;
           height: 48px;
@@ -442,7 +545,7 @@ export default function GalleryPage() {
           .gallery-grid { 
             grid-template-columns: 1fr;
             gap: 1rem;
-            padding: 2rem 1rem;
+            padding: 2rem 1rem 1rem;
           }
           .filter-bar-inner { gap: 1rem; }
           .filter-btn { font-size: 0.75rem; }
@@ -477,40 +580,91 @@ export default function GalleryPage() {
 
       {/* ─── GRID ─── */}
       {filteredItems.length > 0 ? (
-        <div className="gallery-grid">
-          {filteredItems.map((item, idx) => {
-            const isVideo = item.type === 'video';
-            const mediaUrl = isVideo
-              ? `${STRAPI_URL}${item.video?.url}`
-              : (item.image?.url ? `${STRAPI_URL}${item.image.url}` : null);
-            return (
-              <ScrollReveal key={item.documentId || idx} delay={idx * 60}>
-                <div className="gallery-item" onClick={() => openMedia(item)}>
-                  {mediaUrl ? (
-                    isVideo ? (
-                      <video src={mediaUrl} muted loop playsInline style={{ pointerEvents: 'none' }} />
+        <>
+          <div className="gallery-grid">
+            {currentItems.map((item, idx) => {
+              const isVideo = item.type === 'video';
+              const mediaUrl = isVideo
+                ? `${STRAPI_URL}${item.video?.url}`
+                : (item.image?.url ? `${STRAPI_URL}${item.image.url}` : null);
+              
+              // Calculate the absolute index within the filteredItems array
+              const absoluteIndex = currentPage * itemsPerPage + idx;
+
+              return (
+                <ScrollReveal key={item.documentId || absoluteIndex} delay={idx * 60}>
+                  <div className="gallery-item" onClick={() => openMedia(item, absoluteIndex)}>
+                    {mediaUrl ? (
+                      isVideo ? (
+                        <video src={mediaUrl} muted loop playsInline style={{ pointerEvents: 'none' }} />
+                      ) : (
+                        <img src={mediaUrl} alt={item.Title || 'Gallery media'} />
+                      )
                     ) : (
-                      <img src={mediaUrl} alt={item.Title || 'Gallery media'} />
-                    )
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#CCC', background: '#E0DDD7', fontSize: '2rem' }}>
-                      {isVideo ? '🎬' : '🖼️'}
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#CCC', background: '#E0DDD7', fontSize: '2rem' }}>
+                        {isVideo ? '🎬' : '🖼️'}
+                      </div>
+                    )}
+                    
+                    {/* Carmelina Luxury Overlay */}
+                    <div className="overlay">
+                      <div className="action-icon">
+                        {isVideo ? '▶' : '+'}
+                      </div>
+                      {item.Title && <h3 className="title">{item.Title}</h3>}
+                      {item.Category && <span className="category-tag">{item.Category}</span>}
                     </div>
-                  )}
-                  
-                  {/* Carmelina Luxury Overlay */}
-                  <div className="overlay">
-                    <div className="action-icon">
-                      {isVideo ? '▶' : '+'}
-                    </div>
-                    {item.Title && <h3 className="title">{item.Title}</h3>}
-                    {item.Category && <span className="category-tag">{item.Category}</span>}
                   </div>
-                </div>
-              </ScrollReveal>
-            );
-          })}
-        </div>
+                </ScrollReveal>
+              );
+            })}
+          </div>
+
+          {/* ─── SLIDER CONTROLS (UNTOUCHED) ─── */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', paddingBottom: '3rem' }}>
+              <button 
+                onClick={goToPrev}
+                style={{
+                  background: DARK_NAVY, color: '#FFFFFF', border: 'none', width: '40px', height: '40px', 
+                  borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                  transition: 'all 0.3s ease', fontSize: '1.2rem'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = DARK_NAVY; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = DARK_NAVY; e.currentTarget.style.color = '#FFFFFF'; }}
+              >‹</button>
+
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {Array.from({ length: totalPages }).map((_, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => setCurrentPage(idx)}
+                    style={{
+                      width: idx === currentPage ? '20px' : '8px',
+                      height: '8px',
+                      borderRadius: '4px',
+                      background: idx === currentPage ? GOLD : '#CCCCCC',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                  />
+                ))}
+              </div>
+
+              <button 
+                onClick={goToNext}
+                style={{
+                  background: DARK_NAVY, color: '#FFFFFF', border: 'none', width: '40px', height: '40px', 
+                  borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                  transition: 'all 0.3s ease', fontSize: '1.2rem'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.color = DARK_NAVY; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = DARK_NAVY; e.currentTarget.style.color = '#FFFFFF'; }}
+              >›</button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="empty-state">
           <div className="icon">🖼️</div>
@@ -523,9 +677,14 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {/* ─── MODAL ─── */}
+      {/* ─── MODAL (UPDATED WITH PREV/NEXT PROPS) ─── */}
       {modalOpen && selectedItem && (
-        <MediaModal item={selectedItem} onClose={() => setModalOpen(false)} />
+        <MediaModal 
+          item={selectedItem} 
+          onClose={() => setModalOpen(false)} 
+          onPrev={handleModalPrev} 
+          onNext={handleModalNext} 
+        />
       )}
     </div>
   );
