@@ -363,9 +363,9 @@ export default function Home() {
      
 
            {/* ─── HERO + CHECK AVAILABILITY CONTAINER ─── */}
-      <div style={{ display: 'flex', flexDirection: 'column', height: isMobile ? '100dvh' : 'auto' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: isMobile ? '100dvh' : 'auto' }}>
       <ScrollReveal delay={0}>
-                              <section style={{ position: 'relative', flex: '1 1 auto', minHeight: '0px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
+                            <section style={{ position: 'relative', flex: '1 1 auto', minHeight: isMobile ? '350px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
           {/* Dynamic Media Background */} 
           {mediaList.length > 0 ? (
             <>
@@ -479,7 +479,7 @@ export default function Home() {
           )}
 
                             {/* Hero Content */}
-                  <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '80px 1rem 120px' : '0 1rem 100px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', boxSizing: 'border-box' }}>
+                           <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '80px 1rem 40px' : '0 1rem 80px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', boxSizing: 'border-box' }}>
                        <h1 style={{ fontSize: isMobile ? '1.4rem' : '3.5rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)' }}>
               {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
             </h1>
@@ -497,7 +497,7 @@ export default function Home() {
 
    {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
 <ScrollReveal delay={200}>
-                        <section
+                            <section
     style={{
       flex: '0 0 auto',
       position: 'relative',
