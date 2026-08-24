@@ -364,7 +364,7 @@ export default function Home() {
 
       {/* ─── HERO (now with ScrollReveal & no padding) ─── */}
       <ScrollReveal delay={0}>
-                                <section style={{ position: 'relative', height: isMobile ? '100dvh' : '100vh', minHeight: isMobile ? '600px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
+                               <section style={{ position: 'relative', height: isMobile ? '65dvh' : '100vh', minHeight: isMobile ? '400px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
           {/* Dynamic Media Background */} 
           {mediaList.length > 0 ? (
             <>
