@@ -362,9 +362,10 @@ export default function Home() {
 
      
 
-      {/* ─── HERO (now with ScrollReveal & no padding) ─── */}
+           {/* ─── HERO + CHECK AVAILABILITY CONTAINER ─── */}
+      <div style={{ display: 'flex', flexDirection: 'column', height: isMobile ? '100dvh' : 'auto' }}>
       <ScrollReveal delay={0}>
-                               <section style={{ position: 'relative', height: isMobile ? '65dvh' : '100vh', minHeight: isMobile ? '400px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
+                              <section style={{ position: 'relative', flex: '1 1 auto', minHeight: '0px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
           {/* Dynamic Media Background */} 
           {mediaList.length > 0 ? (
             <>
@@ -496,21 +497,21 @@ export default function Home() {
 
    {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
 <ScrollReveal delay={200}>
-         <section
+                        <section
     style={{
+      flex: '0 0 auto',
       position: 'relative',
       zIndex: 30,
       padding: isMobile ? '0 1rem' : '0 1rem',
       maxWidth: '1180px',
-      marginTop: '0px', // No negative margin, so it does not cover the image!
-      margin: isMobile ? '0 1rem 2rem' : '0 auto 3rem',
+      margin: isMobile ? '0 1rem' : '0 auto 3rem',
       backgroundColor: '#FFFFFF',
       colorScheme: 'light',
       forcedColorAdjust: 'none',
       borderRadius: '4px',
       boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
     }}
-    >
+  >
     <form
       onSubmit={handleSearchAvailability}
       style={{
@@ -693,6 +694,7 @@ export default function Home() {
     </form>
   </section>
 </ScrollReveal>
+</div>
 
       {/* ─── ABOUT (HomeWelcome) ─── */}
       {homeWelcome && (
