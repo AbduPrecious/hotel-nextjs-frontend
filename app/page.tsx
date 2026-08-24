@@ -483,7 +483,7 @@ export default function Home() {
           )}
 
           {/* Hero Content */}
-          <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '1rem' : '0 1rem', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+                    <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '3.5rem 1rem 1rem' : '0 1rem', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', boxSizing: 'border-box' }}>
             <h1 style={{ fontSize: isMobile ? '1.2rem' : '3.5rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)', margin: 0 }}>
               {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
             </h1>
@@ -521,7 +521,7 @@ export default function Home() {
           onSubmit={handleSearchAvailability}
           style={{
             backgroundColor: '#FFFFFF',
-            padding: isMobile ? '1.25rem 1rem' : '1.75rem 2rem',
+                       padding: isMobile ? '0.75rem 1rem' : '1.75rem 2rem',
             borderBottom: '3px solid #17232E',
             borderRadius: '4px',
           }}
