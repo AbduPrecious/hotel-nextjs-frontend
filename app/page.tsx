@@ -364,7 +364,7 @@ export default function Home() {
 
       {/* ─── HERO (now with ScrollReveal & no padding) ─── */}
       <ScrollReveal delay={0}>
-                                 <section style={{ position: 'relative', height: isMobile ? '55dvh' : '100vh', minHeight: isMobile ? '400px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
+                                <section style={{ position: 'relative', height: isMobile ? '100dvh' : '100vh', minHeight: isMobile ? '600px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
           {/* Dynamic Media Background */} 
           {mediaList.length > 0 ? (
             <>
@@ -478,7 +478,7 @@ export default function Home() {
           )}
 
                             {/* Hero Content */}
-          <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '0 1rem 40px' : '0 1rem 80px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', boxSizing: 'border-box' }}>
+                  <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '80px 1rem 120px' : '0 1rem 100px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', boxSizing: 'border-box' }}>
                        <h1 style={{ fontSize: isMobile ? '1.4rem' : '3.5rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)' }}>
               {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
             </h1>
@@ -496,12 +496,13 @@ export default function Home() {
 
    {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
 <ScrollReveal delay={200}>
-                        <section
+         <section
     style={{
       position: 'relative',
       zIndex: 30,
       padding: isMobile ? '0 1rem' : '0 1rem',
       maxWidth: '1180px',
+      marginTop: '0px', // No negative margin, so it does not cover the image!
       margin: isMobile ? '0 1rem 2rem' : '0 auto 3rem',
       backgroundColor: '#FFFFFF',
       colorScheme: 'light',
@@ -509,7 +510,6 @@ export default function Home() {
       borderRadius: '4px',
       boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
     }}
-  >
     <form
       onSubmit={handleSearchAvailability}
       style={{
