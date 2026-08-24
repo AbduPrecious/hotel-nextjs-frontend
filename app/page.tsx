@@ -510,6 +510,7 @@ export default function Home() {
       borderRadius: '4px',
       boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
     }}
+    >
     <form
       onSubmit={handleSearchAvailability}
       style={{
