@@ -363,9 +363,11 @@ export default function Home() {
      
 
        {/* ─── HERO + CHECK AVAILABILITY CONTAINER ─── */}
-<div style={{ display: 'flex', flexDirection: 'column', height: isMobile ? '100dvh' : '100vh', width: '100%', overflow: 'hidden' }}>
-  <div style={{ flex: '1 1 auto', display: 'flex', minHeight: 0, position: 'relative' }}>
-    <ScrollReveal delay={0}>
+<div style={{ display: 'flex', flexDirection: 'column', width: '100%', minHeight: isMobile ? '100dvh' : 'auto' }}>
+  
+  {/* HERO SECTION */}
+  <div style={{ width: '100%', height: isMobile ? '50dvh' : '100vh', position: 'relative', overflow: 'hidden' }}>
+    <ScrollReveal delay={0} style={{ width: '100%', height: '100%' }}>
       <section style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
         {/* Dynamic Media Background */} 
         {mediaList.length > 0 ? (
@@ -405,9 +407,9 @@ export default function Home() {
                       style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
+                        objectFit: isMobile ? 'contain' : 'cover', // 'contain' keeps image whole on mobile
                         objectPosition: 'center',
-                        transform: `translateY(${offsetY * 0.15}px)`,
+                        transform: isMobile ? 'none' : `translateY(${offsetY * 0.15}px)`,
                         filter: 'brightness(1.4)',
                       }}
                     />
@@ -436,8 +438,8 @@ export default function Home() {
                 backdropFilter: 'blur(4px)',
                 border: '2px solid rgba(255, 255, 255, 0.8)',
                 color: '#FFFFFF',
-                width: isMobile ? '36px' : '48px',
-                height: isMobile ? '36px' : '48px',
+                width: isMobile ? '32px' : '48px',
+                height: isMobile ? '32px' : '48px',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -448,7 +450,7 @@ export default function Home() {
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
             >
-              <svg width={isMobile ? "18" : "24"} height={isMobile ? "18" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+              <svg width={isMobile ? "16" : "24"} height={isMobile ? "16" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             </button>
             <button
               onClick={handleNextMedia}
@@ -462,8 +464,8 @@ export default function Home() {
                 backdropFilter: 'blur(4px)',
                 border: '2px solid rgba(255, 255, 255, 0.8)',
                 color: '#FFFFFF',
-                width: isMobile ? '36px' : '48px',
-                height: isMobile ? '36px' : '48px',
+                width: isMobile ? '32px' : '48px',
+                height: isMobile ? '32px' : '48px',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -474,22 +476,22 @@ export default function Home() {
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
             >
-              <svg width={isMobile ? "18" : "24"} height={isMobile ? "18" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              <svg width={isMobile ? "16" : "24"} height={isMobile ? "16" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
             </button>
           </div>
         )}
 
         {/* Hero Content */}
-        <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '2rem 1rem 1rem' : '0 1rem', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
-          <h1 style={{ fontSize: isMobile ? '1.4rem' : '3.5rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)', margin: 0 }}>
+        <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '1rem' : '0 1rem', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+          <h1 style={{ fontSize: isMobile ? '1.2rem' : '3.5rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)', margin: 0 }}>
             {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
           </h1>
-          <p style={{ fontSize: isMobile ? '0.8rem' : '1.2rem', color: '#FFFFFF', maxWidth: '672px', margin: isMobile ? '0.5rem auto 0.75rem' : '1rem auto 1.5rem', lineHeight: '1.6', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
+          <p style={{ fontSize: isMobile ? '0.75rem' : '1.2rem', color: '#FFFFFF', maxWidth: '672px', margin: isMobile ? '0.4rem auto 0.6rem' : '1rem auto 1.5rem', lineHeight: '1.4', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
             Welcome to {hotelName}, where comfort meets elegance.
           </p>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="#rooms" style={{ background: 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 100%)', color: '#1A1A1A', fontWeight: 600, padding: isMobile ? '0.5rem 1rem' : '0.75rem 2rem', borderRadius: '9999px', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(200,168,124,0.3)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Explore Rooms<svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></a>
-            <Link href="/rooms" style={{ border: '2px solid #FFFFFF', color: '#FFFFFF', fontWeight: 600, padding: isMobile ? '0.5rem 1rem' : '0.75rem 2rem', borderRadius: '9999px', background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#1A1A1A'; e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(255,255,255,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Book Now<svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></Link>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="#rooms" style={{ background: 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 100%)', color: '#1A1A1A', fontWeight: 600, padding: isMobile ? '0.4rem 0.85rem' : '0.75rem 2rem', borderRadius: '9999px', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(200,168,124,0.3)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Explore Rooms<svg style={{ width: '0.85rem', height: '0.85rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></a>
+            <Link href="/rooms" style={{ border: '2px solid #FFFFFF', color: '#FFFFFF', fontWeight: 600, padding: isMobile ? '0.4rem 0.85rem' : '0.75rem 2rem', borderRadius: '9999px', background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#1A1A1A'; e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(255,255,255,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Book Now<svg style={{ width: '0.85rem', height: '0.85rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></Link>
           </div>
         </div>
       </section>
@@ -497,19 +499,19 @@ export default function Home() {
   </div>
 
   {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
-  <div style={{ flex: '0 0 auto', width: '100%', margin: 0, padding: 0 }}>
+  <div style={{ width: '100%', height: isMobile ? '50dvh' : 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'center', margin: 0, padding: 0 }}>
     <ScrollReveal delay={200}>
       <section
         style={{
           position: 'relative',
           zIndex: 30,
-          padding: isMobile ? '0 1rem 0' : '0 1rem',
+          padding: isMobile ? '0 1rem' : '0 1rem',
           maxWidth: '1180px',
           margin: '0 auto',
           backgroundColor: '#FFFFFF',
           colorScheme: 'light',
           forcedColorAdjust: 'none',
-          borderRadius: '4px 4px 0 0',
+          borderRadius: '4px',
           boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
         }}
       >
@@ -517,7 +519,7 @@ export default function Home() {
           onSubmit={handleSearchAvailability}
           style={{
             backgroundColor: '#FFFFFF',
-            padding: isMobile ? '0.75rem 1rem' : '1.75rem 2rem',
+            padding: isMobile ? '1.25rem 1rem' : '1.75rem 2rem',
             borderBottom: '3px solid #17232E',
             borderRadius: '4px',
           }}
@@ -526,7 +528,7 @@ export default function Home() {
             style={{
               display: 'grid',
               gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
-              gap: isMobile ? '0.5rem' : '1.5rem',
+              gap: isMobile ? '1rem 0.75rem' : '1.5rem',
               alignItems: 'end',
             }}
           >
@@ -538,7 +540,7 @@ export default function Home() {
                   fontWeight: 600,
                   color: '#777777',
                   textTransform: 'uppercase',
-                  marginBottom: '0.25rem',
+                  marginBottom: '0.35rem',
                 }}
               >
                 CHECK - IN
@@ -551,8 +553,8 @@ export default function Home() {
                 style={{
                   border: 'none',
                   borderBottom: '1px solid #DDDDDD',
-                  padding: '0.25rem 0',
-                  fontSize: '0.875rem',
+                  padding: '0.4rem 0',
+                  fontSize: '0.9rem',
                   color: '#111111',
                   outline: 'none',
                   backgroundColor: '#FFFFFF',
@@ -568,7 +570,7 @@ export default function Home() {
                   fontWeight: 600,
                   color: '#777777',
                   textTransform: 'uppercase',
-                  marginBottom: '0.25rem',
+                  marginBottom: '0.35rem',
                 }}
               >
                 CHECK - OUT
@@ -581,8 +583,8 @@ export default function Home() {
                 style={{
                   border: 'none',
                   borderBottom: '1px solid #DDDDDD',
-                  padding: '0.25rem 0',
-                  fontSize: '0.875rem',
+                  padding: '0.4rem 0',
+                  fontSize: '0.9rem',
                   color: '#111111',
                   outline: 'none',
                   backgroundColor: '#FFFFFF',
@@ -598,7 +600,7 @@ export default function Home() {
                   fontWeight: 600,
                   color: '#777777',
                   textTransform: 'uppercase',
-                  marginBottom: '0.25rem',
+                  marginBottom: '0.35rem',
                 }}
               >
                 GUESTS
@@ -609,8 +611,8 @@ export default function Home() {
                 style={{
                   border: 'none',
                   borderBottom: '1px solid #DDDDDD',
-                  padding: '0.25rem 0',
-                  fontSize: '0.875rem',
+                  padding: '0.4rem 0',
+                  fontSize: '0.9rem',
                   color: '#111111',
                   outline: 'none',
                   backgroundColor: '#FFFFFF',
@@ -632,7 +634,7 @@ export default function Home() {
                   fontWeight: 600,
                   color: '#777777',
                   textTransform: 'uppercase',
-                  marginBottom: '0.25rem',
+                  marginBottom: '0.35rem',
                 }}
               >
                 CHILDREN
@@ -643,8 +645,8 @@ export default function Home() {
                 style={{
                   border: 'none',
                   borderBottom: '1px solid #DDDDDD',
-                  padding: '0.25rem 0',
-                  fontSize: '0.875rem',
+                  padding: '0.4rem 0',
+                  fontSize: '0.9rem',
                   color: '#111111',
                   outline: 'none',
                   backgroundColor: '#FFFFFF',
@@ -671,7 +673,7 @@ export default function Home() {
                 style={{
                   backgroundColor: '#17232E',
                   color: '#FFFFFF',
-                  padding: isMobile ? '0.6rem 1rem' : '0.85rem 1.25rem',
+                  padding: isMobile ? '0.75rem 1rem' : '0.85rem 1.25rem',
                   border: 'none',
                   fontSize: '0.75rem',
                   letterSpacing: '0.18em',
