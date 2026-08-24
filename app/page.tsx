@@ -364,7 +364,7 @@ export default function Home() {
 
       {/* ─── HERO (now with ScrollReveal & no padding) ─── */}
       <ScrollReveal delay={0}>
-                                 <section style={{ position: 'relative', height: isMobile ? '55dvh' : '100vh', minHeight: isMobile ? '400px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem', overflow: 'hidden', background: '#FFFFFF' }}>
+                                 <section style={{ position: 'relative', height: isMobile ? '55dvh' : '100vh', minHeight: isMobile ? '400px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
           {/* Dynamic Media Background */} 
           {mediaList.length > 0 ? (
             <>
@@ -393,7 +393,7 @@ export default function Home() {
                         height: '100%',
                         objectFit: 'cover',
                         objectPosition: 'center',
-                        filter: 'brightness(1.2)',
+                                               filter: 'brightness(1.4)',
                       }}
                     />
                   ) : mediaUrl ? (
@@ -406,14 +406,14 @@ export default function Home() {
                         objectFit: 'cover', // 👈 Fills the entire section, killing the gap
                         objectPosition: 'top center', // 👈 Keeps the top safe from navbar
                         transform: `translateY(${offsetY * 0.15}px)`,
-                        filter: 'brightness(1.2)',
+                                                filter: 'brightness(1.4)',
                       }}
                     />
                   ) : null}
                 </div>
                 );
               })}
-              <div style={{ position: 'absolute', inset: 0, zIndex: 2, background: 'rgba(0,0,0,0.4)' }} />
+                            <div style={{ position: 'absolute', inset: 0, zIndex: 2, background: 'rgba(0,0,0,0.25)' }} />
             </>
           ) : (
             <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: '#1A1A1A' }} />
@@ -478,11 +478,11 @@ export default function Home() {
           )}
 
                             {/* Hero Content */}
-          <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '60px 1rem 20px' : '100px 1rem 50px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', boxSizing: 'border-box' }}>
-            <h1 style={{ fontSize: isMobile ? '1.4rem' : '2.25rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)' }}>
+          <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '0 1rem 40px' : '0 1rem 80px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', boxSizing: 'border-box' }}>
+                       <h1 style={{ fontSize: isMobile ? '1.4rem' : '3.5rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)' }}>
               {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
             </h1>
-            <p style={{ fontSize: isMobile ? '0.7rem' : '0.875rem', color: '#FFFFFF', maxWidth: '672px', margin: isMobile ? '0.5rem auto 0.75rem' : '1rem auto 1.5rem', lineHeight: '1.5', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
+                       <p style={{ fontSize: isMobile ? '0.8rem' : '1.2rem', color: '#FFFFFF', maxWidth: '672px', margin: isMobile ? '0.5rem auto 0.75rem' : '1rem auto 1.5rem', lineHeight: '1.6', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
               Welcome to {hotelName}, where comfort meets elegance.
             </p>
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -496,13 +496,13 @@ export default function Home() {
 
    {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
 <ScrollReveal delay={200}>
-                          <section
+                        <section
     style={{
       position: 'relative',
       zIndex: 30,
       padding: isMobile ? '0 1rem' : '0 1rem',
       maxWidth: '1180px',
-      margin: isMobile ? '-40px 1rem 2rem' : '-50px auto 3rem',
+      margin: isMobile ? '0 1rem 2rem' : '0 auto 3rem',
       backgroundColor: '#FFFFFF',
       colorScheme: 'light',
       forcedColorAdjust: 'none',
