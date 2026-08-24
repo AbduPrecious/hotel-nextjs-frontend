@@ -362,338 +362,336 @@ export default function Home() {
 
      
 
-           {/* ─── HERO + CHECK AVAILABILITY CONTAINER ─── */}
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: isMobile ? '100dvh' : 'auto' }}>
-      <ScrollReveal delay={0}>
-                            <section style={{ position: 'relative', flex: '1 1 auto', minHeight: isMobile ? '350px' : '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
-          {/* Dynamic Media Background */} 
-          {mediaList.length > 0 ? (
-            <>
-              {mediaList.map((media, idx) => {
-                const mediaUrl = getMediaUrl(media);
-                  return (
-                    <div
-                  key={idx}
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: idx === mediaIndex ? 1 : 0,
-                    opacity: idx === mediaIndex ? 1 : 0,
-                    transition: 'opacity 1.2s ease-in-out',
-                  }}
-                >
-                  {isVideo(media) ? (
-                                           <video
-                      src={mediaUrl}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                                           style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: 'center',
-                                               filter: 'brightness(1.4)',
-                      }}
-                    />
-                  ) : mediaUrl ? (
-                    <Image
-                      src={mediaUrl}
-                      alt={`${hotelName} - slide ${idx + 1}`}
-                                           style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover', // 👈 Fills the entire section, killing the gap
-                        objectPosition: 'top center', // 👈 Keeps the top safe from navbar
-                        transform: `translateY(${offsetY * 0.15}px)`,
-                                                filter: 'brightness(1.4)',
-                      }}
-                    />
-                  ) : null}
-                </div>
-                );
-              })}
-                            <div style={{ position: 'absolute', inset: 0, zIndex: 2, background: 'rgba(0,0,0,0.25)' }} />
-            </>
-          ) : (
-            <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: '#1A1A1A' }} />
-          )}
-
-          {/* Hero Navigation Buttons */}
-          {mediaList.length > 1 && (
-            <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0, zIndex: 20, pointerEvents: 'none' }}>
-              <button
-                onClick={handlePrevMedia}
+        {/* ─── HERO + CHECK AVAILABILITY CONTAINER ─── */}
+<div style={{ display: 'flex', flexDirection: 'column', height: isMobile ? '100dvh' : '100vh', width: '100%', overflow: 'hidden' }}>
+  <ScrollReveal delay={0} style={{ flex: '1 1 auto', display: 'flex', minHeight: 0, position: 'relative' }}>
+    <section style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
+      {/* Dynamic Media Background */} 
+      {mediaList.length > 0 ? (
+        <>
+          {mediaList.map((media, idx) => {
+            const mediaUrl = getMediaUrl(media);
+            return (
+              <div
+                key={idx}
                 style={{
-                  pointerEvents: 'auto',
                   position: 'absolute',
-                  left: isMobile ? '0.5rem' : '1.5rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  backdropFilter: 'blur(4px)',
-                  border: '2px solid rgba(255, 255, 255, 0.8)',
-                  color: '#FFFFFF',
-                  width: isMobile ? '36px' : '48px',
-                  height: isMobile ? '36px' : '48px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
+                  inset: 0,
+                  zIndex: idx === mediaIndex ? 1 : 0,
+                  opacity: idx === mediaIndex ? 1 : 0,
+                  transition: 'opacity 1.2s ease-in-out',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
               >
-                <svg width={isMobile ? "18" : "24"} height={isMobile ? "18" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-              </button>
-              <button
-                onClick={handleNextMedia}
-                style={{
-                  pointerEvents: 'auto',
-                  position: 'absolute',
-                  right: isMobile ? '0.5rem' : '1.5rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  backdropFilter: 'blur(4px)',
-                  border: '2px solid rgba(255, 255, 255, 0.8)',
-                  color: '#FFFFFF',
-                  width: isMobile ? '36px' : '48px',
-                  height: isMobile ? '36px' : '48px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
-              >
-                <svg width={isMobile ? "18" : "24"} height={isMobile ? "18" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </button>
-            </div>
-          )}
+                {isVideo(media) ? (
+                  <video
+                    src={mediaUrl}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
+                      filter: 'brightness(1.4)',
+                    }}
+                  />
+                ) : mediaUrl ? (
+                  <Image
+                    src={mediaUrl}
+                    alt={`${hotelName} - slide ${idx + 1}`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
+                      transform: `translateY(${offsetY * 0.15}px)`,
+                      filter: 'brightness(1.4)',
+                    }}
+                  />
+                ) : null}
+              </div>
+            );
+          })}
+          <div style={{ position: 'absolute', inset: 0, zIndex: 2, background: 'rgba(0,0,0,0.35)' }} />
+        </>
+      ) : (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: '#1A1A1A' }} />
+      )}
 
-                            {/* Hero Content */}
-                           <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '80px 1rem 40px' : '0 1rem 80px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', boxSizing: 'border-box' }}>
-                       <h1 style={{ fontSize: isMobile ? '1.4rem' : '3.5rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)' }}>
-              {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
-            </h1>
-                       <p style={{ fontSize: isMobile ? '0.8rem' : '1.2rem', color: '#FFFFFF', maxWidth: '672px', margin: isMobile ? '0.5rem auto 0.75rem' : '1rem auto 1.5rem', lineHeight: '1.6', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
-              Welcome to {hotelName}, where comfort meets elegance.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <a href="#rooms" style={{ background: 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 100%)', color: '#1A1A1A', fontWeight: 600, padding: isMobile ? '0.5rem 1rem' : '0.75rem 2rem', borderRadius: '9999px', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(200,168,124,0.3)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Explore Rooms<svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></a>
-              <Link href="/rooms" style={{ border: '2px solid #FFFFFF', color: '#FFFFFF', fontWeight: 600, padding: isMobile ? '0.5rem 1rem' : '0.75rem 2rem', borderRadius: '9999px', background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#1A1A1A'; e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(255,255,255,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Book Now<svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></Link>
-            </div>
-          </div>
-          
-        </section>
-      </ScrollReveal>
-
-   {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
-<ScrollReveal delay={200}>
-                            <section
-    style={{
-      flex: '0 0 auto',
-      position: 'relative',
-      zIndex: 30,
-      padding: isMobile ? '0 1rem' : '0 1rem',
-      maxWidth: '1180px',
-      margin: isMobile ? '0 1rem' : '0 auto 3rem',
-      backgroundColor: '#FFFFFF',
-      colorScheme: 'light',
-      forcedColorAdjust: 'none',
-      borderRadius: '4px',
-      boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
-    }}
-  >
-    <form
-      onSubmit={handleSearchAvailability}
-      style={{
-        backgroundColor: '#FFFFFF',
-        padding: isMobile ? '1rem' : '1.75rem 2rem',
-        borderBottom: '3px solid #17232E',
-        borderRadius: '4px',
-      }}
-    >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: isMobile ? '1rem' : '1.5rem',
-          alignItems: 'end',
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
-          <label
-            style={{
-              fontSize: '0.72rem',
-              letterSpacing: '0.15em',
-              fontWeight: 600,
-              color: '#777777',
-              textTransform: 'uppercase',
-              marginBottom: '0.5rem',
-            }}
-          >
-            CHECK - IN
-          </label>
-          <input
-            type="date"
-            className="carmelina-input"
-            value={checkIn}
-            onChange={(e) => setCheckIn(e.target.value)}
-            style={{
-              border: 'none',
-              borderBottom: '1px solid #DDDDDD',
-              padding: '0.5rem 0',
-              fontSize: '1rem',
-              color: '#111111',
-              outline: 'none',
-              backgroundColor: '#FFFFFF', // Changed from transparent
-            }}
-            required
-          />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
-          <label
-            style={{
-              fontSize: '0.72rem',
-              letterSpacing: '0.15em',
-              fontWeight: 600,
-              color: '#777777',
-              textTransform: 'uppercase',
-              marginBottom: '0.5rem',
-            }}
-          >
-            CHECK - OUT
-          </label>
-          <input
-            type="date"
-            className="carmelina-input"
-            value={checkOut}
-            onChange={(e) => setCheckOut(e.target.value)}
-            style={{
-              border: 'none',
-              borderBottom: '1px solid #DDDDDD',
-              padding: '0.5rem 0',
-              fontSize: '1rem',
-              color: '#111111',
-              outline: 'none',
-              backgroundColor: '#FFFFFF', // Changed from transparent
-            }}
-            required
-          />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
-          <label
-            style={{
-              fontSize: '0.72rem',
-              letterSpacing: '0.15em',
-              fontWeight: 600,
-              color: '#777777',
-              textTransform: 'uppercase',
-              marginBottom: '0.5rem',
-            }}
-          >
-            GUESTS
-          </label>
-          <select
-            value={adults}
-            onChange={(e) => setAdults(Number(e.target.value))}
-            style={{
-              border: 'none',
-              borderBottom: '1px solid #DDDDDD',
-              padding: '0.5rem 0',
-              fontSize: '1rem',
-              color: '#111111',
-              outline: 'none',
-              backgroundColor: '#FFFFFF', // Changed from transparent
-              cursor: 'pointer',
-            }}
-          >
-            {[1, 2, 3, 4, 5, 6].map((num) => (
-              <option key={num} value={num}>
-                {num}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
-          <label
-            style={{
-              fontSize: '0.72rem',
-              letterSpacing: '0.15em',
-              fontWeight: 600,
-              color: '#777777',
-              textTransform: 'uppercase',
-              marginBottom: '0.5rem',
-            }}
-          >
-            CHILDREN
-          </label>
-          <select
-            value={children}
-            onChange={(e) => setChildren(Number(e.target.value))}
-            style={{
-              border: 'none',
-              borderBottom: '1px solid #DDDDDD',
-              padding: '0.5rem 0',
-              fontSize: '1rem',
-              color: '#111111',
-              outline: 'none',
-              backgroundColor: '#FFFFFF', // Changed from transparent
-              cursor: 'pointer',
-            }}
-          >
-            {[0, 1, 2, 3, 4].map((num) => (
-              <option key={num} value={num}>
-                {num}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gridColumn: isMobile ? '1 / -1' : 'span 1',
-            backgroundColor: '#FFFFFF',
-          }}
-        >
+      {/* Hero Navigation Buttons */}
+      {mediaList.length > 1 && (
+        <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0, zIndex: 20, pointerEvents: 'none' }}>
           <button
-            type="submit"
+            onClick={handlePrevMedia}
             style={{
-              backgroundColor: '#17232E',
+              pointerEvents: 'auto',
+              position: 'absolute',
+              left: isMobile ? '0.5rem' : '1.5rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(0, 0, 0, 0.3)',
+              backdropFilter: 'blur(4px)',
+              border: '2px solid rgba(255, 255, 255, 0.8)',
               color: '#FFFFFF',
-              padding: '0.85rem 1.25rem',
-              border: 'none',
-              fontSize: '0.75rem',
-              letterSpacing: '0.18em',
-              fontWeight: 600,
-              textTransform: 'uppercase',
+              width: isMobile ? '36px' : '48px',
+              height: isMobile ? '36px' : '48px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               cursor: 'pointer',
-              transition: 'background-color 0.3s ease',
-              width: '100%',
+              transition: 'all 0.3s ease',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#B69B78';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#17232E';
-            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
           >
-            CHECK AVAILABILITY
+            <svg width={isMobile ? "18" : "24"} height={isMobile ? "18" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <button
+            onClick={handleNextMedia}
+            style={{
+              pointerEvents: 'auto',
+              position: 'absolute',
+              right: isMobile ? '0.5rem' : '1.5rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(0, 0, 0, 0.3)',
+              backdropFilter: 'blur(4px)',
+              border: '2px solid rgba(255, 255, 255, 0.8)',
+              color: '#FFFFFF',
+              width: isMobile ? '36px' : '48px',
+              height: isMobile ? '36px' : '48px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
+          >
+            <svg width={isMobile ? "18" : "24"} height={isMobile ? "18" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
+      )}
+
+      {/* Hero Content */}
+      <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '2rem 1rem 1rem' : '0 1rem', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+        <h1 style={{ fontSize: isMobile ? '1.4rem' : '3.5rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)', margin: 0 }}>
+          {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
+        </h1>
+        <p style={{ fontSize: isMobile ? '0.8rem' : '1.2rem', color: '#FFFFFF', maxWidth: '672px', margin: isMobile ? '0.5rem auto 0.75rem' : '1rem auto 1.5rem', lineHeight: '1.6', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
+          Welcome to {hotelName}, where comfort meets elegance.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <a href="#rooms" style={{ background: 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 100%)', color: '#1A1A1A', fontWeight: 600, padding: isMobile ? '0.5rem 1rem' : '0.75rem 2rem', borderRadius: '9999px', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(200,168,124,0.3)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Explore Rooms<svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></a>
+          <Link href="/rooms" style={{ border: '2px solid #FFFFFF', color: '#FFFFFF', fontWeight: 600, padding: isMobile ? '0.5rem 1rem' : '0.75rem 2rem', borderRadius: '9999px', background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#1A1A1A'; e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(255,255,255,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Book Now<svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></Link>
+        </div>
       </div>
-    </form>
-  </section>
-</ScrollReveal>
+    </section>
+  </ScrollReveal>
+
+  {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
+  <ScrollReveal delay={200} style={{ flex: '0 0 auto', width: '100%', margin: 0, padding: 0 }}>
+    <section
+      style={{
+        position: 'relative',
+        zIndex: 30,
+        padding: isMobile ? '0 1rem 0' : '0 1rem',
+        maxWidth: '1180px',
+        margin: '0 auto',
+        backgroundColor: '#FFFFFF',
+        colorScheme: 'light',
+        forcedColorAdjust: 'none',
+        borderRadius: '4px 4px 0 0',
+        boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
+      }}
+    >
+      <form
+        onSubmit={handleSearchAvailability}
+        style={{
+          backgroundColor: '#FFFFFF',
+          padding: isMobile ? '0.75rem 1rem' : '1.75rem 2rem',
+          borderBottom: '3px solid #17232E',
+          borderRadius: '4px',
+        }}
+      >
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: isMobile ? '0.5rem' : '1.5rem',
+            alignItems: 'end',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
+            <label
+              style={{
+                fontSize: '0.72rem',
+                letterSpacing: '0.15em',
+                fontWeight: 600,
+                color: '#777777',
+                textTransform: 'uppercase',
+                marginBottom: '0.25rem',
+              }}
+            >
+              CHECK - IN
+            </label>
+            <input
+              type="date"
+              className="carmelina-input"
+              value={checkIn}
+              onChange={(e) => setCheckIn(e.target.value)}
+              style={{
+                border: 'none',
+                borderBottom: '1px solid #DDDDDD',
+                padding: '0.25rem 0',
+                fontSize: '0.875rem',
+                color: '#111111',
+                outline: 'none',
+                backgroundColor: '#FFFFFF',
+              }}
+              required
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
+            <label
+              style={{
+                fontSize: '0.72rem',
+                letterSpacing: '0.15em',
+                fontWeight: 600,
+                color: '#777777',
+                textTransform: 'uppercase',
+                marginBottom: '0.25rem',
+              }}
+            >
+              CHECK - OUT
+            </label>
+            <input
+              type="date"
+              className="carmelina-input"
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+              style={{
+                border: 'none',
+                borderBottom: '1px solid #DDDDDD',
+                padding: '0.25rem 0',
+                fontSize: '0.875rem',
+                color: '#111111',
+                outline: 'none',
+                backgroundColor: '#FFFFFF',
+              }}
+              required
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
+            <label
+              style={{
+                fontSize: '0.72rem',
+                letterSpacing: '0.15em',
+                fontWeight: 600,
+                color: '#777777',
+                textTransform: 'uppercase',
+                marginBottom: '0.25rem',
+              }}
+            >
+              GUESTS
+            </label>
+            <select
+              value={adults}
+              onChange={(e) => setAdults(Number(e.target.value))}
+              style={{
+                border: 'none',
+                borderBottom: '1px solid #DDDDDD',
+                padding: '0.25rem 0',
+                fontSize: '0.875rem',
+                color: '#111111',
+                outline: 'none',
+                backgroundColor: '#FFFFFF',
+                cursor: 'pointer',
+              }}
+            >
+              {[1, 2, 3, 4, 5, 6].map((num) => (
+                <option key={num} value={num}>
+                  {num}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
+            <label
+              style={{
+                fontSize: '0.72rem',
+                letterSpacing: '0.15em',
+                fontWeight: 600,
+                color: '#777777',
+                textTransform: 'uppercase',
+                marginBottom: '0.25rem',
+              }}
+            >
+              CHILDREN
+            </label>
+            <select
+              value={children}
+              onChange={(e) => setChildren(Number(e.target.value))}
+              style={{
+                border: 'none',
+                borderBottom: '1px solid #DDDDDD',
+                padding: '0.25rem 0',
+                fontSize: '0.875rem',
+                color: '#111111',
+                outline: 'none',
+                backgroundColor: '#FFFFFF',
+                cursor: 'pointer',
+              }}
+            >
+              {[0, 1, 2, 3, 4].map((num) => (
+                <option key={num} value={num}>
+                  {num}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gridColumn: isMobile ? '1 / -1' : 'span 1',
+              backgroundColor: '#FFFFFF',
+            }}
+          >
+            <button
+              type="submit"
+              style={{
+                backgroundColor: '#17232E',
+                color: '#FFFFFF',
+                padding: isMobile ? '0.6rem 1rem' : '0.85rem 1.25rem',
+                border: 'none',
+                fontSize: '0.75rem',
+                letterSpacing: '0.18em',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                transition: 'background-color 0.3s ease',
+                width: '100%',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#B69B78';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#17232E';
+              }}
+            >
+              CHECK AVAILABILITY
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </ScrollReveal>
 </div>
 
       {/* ─── ABOUT (HomeWelcome) ─── */}
