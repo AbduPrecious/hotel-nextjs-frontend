@@ -362,140 +362,142 @@ export default function Home() {
 
      
 
-       {/* ─── HERO + CHECK AVAILABILITY CONTAINER ─── */}
+      {/* ─── HERO + CHECK AVAILABILITY CONTAINER ─── */}
 <div style={{ display: 'flex', flexDirection: 'column', width: '100%', minHeight: isMobile ? '100dvh' : 'auto' }}>
   
   {/* HERO SECTION */}
   <div style={{ width: '100%', height: isMobile ? '50dvh' : '100vh', position: 'relative', overflow: 'hidden' }}>
-    <ScrollReveal delay={0} style={{ width: '100%', height: '100%' }}>
-      <section style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
-        {/* Dynamic Media Background */} 
-        {mediaList.length > 0 ? (
-          <>
-            {mediaList.map((media, idx) => {
-              const mediaUrl = getMediaUrl(media);
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: idx === mediaIndex ? 1 : 0,
-                    opacity: idx === mediaIndex ? 1 : 0,
-                    transition: 'opacity 1.2s ease-in-out',
-                  }}
-                >
-                  {isVideo(media) ? (
-                    <video
-                      src={mediaUrl}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: 'center',
-                        filter: 'brightness(1.4)',
-                      }}
-                    />
-                  ) : mediaUrl ? (
-                    <Image
-                      src={mediaUrl}
-                      alt={`${hotelName} - slide ${idx + 1}`}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: isMobile ? 'contain' : 'cover', // 'contain' keeps image whole on mobile
-                        objectPosition: 'center',
-                        transform: isMobile ? 'none' : `translateY(${offsetY * 0.15}px)`,
-                        filter: 'brightness(1.4)',
-                      }}
-                    />
-                  ) : null}
-                </div>
-              );
-            })}
-            <div style={{ position: 'absolute', inset: 0, zIndex: 2, background: 'rgba(0,0,0,0.35)' }} />
-          </>
-        ) : (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: '#1A1A1A' }} />
-        )}
+    <div style={{ width: '100%', height: '100%' }}>
+      <ScrollReveal delay={0}>
+        <section style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
+          {/* Dynamic Media Background */} 
+          {mediaList.length > 0 ? (
+            <>
+              {mediaList.map((media, idx) => {
+                const mediaUrl = getMediaUrl(media);
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      zIndex: idx === mediaIndex ? 1 : 0,
+                      opacity: idx === mediaIndex ? 1 : 0,
+                      transition: 'opacity 1.2s ease-in-out',
+                    }}
+                  >
+                    {isVideo(media) ? (
+                      <video
+                        src={mediaUrl}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          objectPosition: 'center',
+                          filter: 'brightness(1.4)',
+                        }}
+                      />
+                    ) : mediaUrl ? (
+                      <Image
+                        src={mediaUrl}
+                        alt={`${hotelName} - slide ${idx + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: isMobile ? 'contain' : 'cover', // 'contain' keeps image whole on mobile
+                          objectPosition: 'center',
+                          transform: isMobile ? 'none' : `translateY(${offsetY * 0.15}px)`,
+                          filter: 'brightness(1.4)',
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
+              <div style={{ position: 'absolute', inset: 0, zIndex: 2, background: 'rgba(0,0,0,0.35)' }} />
+            </>
+          ) : (
+            <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: '#1A1A1A' }} />
+          )}
 
-        {/* Hero Navigation Buttons */}
-        {mediaList.length > 1 && (
-          <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0, zIndex: 20, pointerEvents: 'none' }}>
-            <button
-              onClick={handlePrevMedia}
-              style={{
-                pointerEvents: 'auto',
-                position: 'absolute',
-                left: isMobile ? '0.5rem' : '1.5rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(4px)',
-                border: '2px solid rgba(255, 255, 255, 0.8)',
-                color: '#FFFFFF',
-                width: isMobile ? '32px' : '48px',
-                height: isMobile ? '32px' : '48px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
-            >
-              <svg width={isMobile ? "16" : "24"} height={isMobile ? "16" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <button
-              onClick={handleNextMedia}
-              style={{
-                pointerEvents: 'auto',
-                position: 'absolute',
-                right: isMobile ? '0.5rem' : '1.5rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(4px)',
-                border: '2px solid rgba(255, 255, 255, 0.8)',
-                color: '#FFFFFF',
-                width: isMobile ? '32px' : '48px',
-                height: isMobile ? '32px' : '48px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
-            >
-              <svg width={isMobile ? "16" : "24"} height={isMobile ? "16" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-            </button>
-          </div>
-        )}
+          {/* Hero Navigation Buttons */}
+          {mediaList.length > 1 && (
+            <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0, zIndex: 20, pointerEvents: 'none' }}>
+              <button
+                onClick={handlePrevMedia}
+                style={{
+                  pointerEvents: 'auto',
+                  position: 'absolute',
+                  left: isMobile ? '0.5rem' : '1.5rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  backdropFilter: 'blur(4px)',
+                  border: '2px solid rgba(255, 255, 255, 0.8)',
+                  color: '#FFFFFF',
+                  width: isMobile ? '32px' : '48px',
+                  height: isMobile ? '32px' : '48px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
+              >
+                <svg width={isMobile ? "16" : "24"} height={isMobile ? "16" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <button
+                onClick={handleNextMedia}
+                style={{
+                  pointerEvents: 'auto',
+                  position: 'absolute',
+                  right: isMobile ? '0.5rem' : '1.5rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  backdropFilter: 'blur(4px)',
+                  border: '2px solid rgba(255, 255, 255, 0.8)',
+                  color: '#FFFFFF',
+                  width: isMobile ? '32px' : '48px',
+                  height: isMobile ? '32px' : '48px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200, 168, 124, 0.8)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
+              >
+                <svg width={isMobile ? "16" : "24"} height={isMobile ? "16" : "24"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          )}
 
-        {/* Hero Content */}
-        <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '1rem' : '0 1rem', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
-          <h1 style={{ fontSize: isMobile ? '1.2rem' : '3.5rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)', margin: 0 }}>
-            {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
-          </h1>
-          <p style={{ fontSize: isMobile ? '0.75rem' : '1.2rem', color: '#FFFFFF', maxWidth: '672px', margin: isMobile ? '0.4rem auto 0.6rem' : '1rem auto 1.5rem', lineHeight: '1.4', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
-            Welcome to {hotelName}, where comfort meets elegance.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="#rooms" style={{ background: 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 100%)', color: '#1A1A1A', fontWeight: 600, padding: isMobile ? '0.4rem 0.85rem' : '0.75rem 2rem', borderRadius: '9999px', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(200,168,124,0.3)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Explore Rooms<svg style={{ width: '0.85rem', height: '0.85rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></a>
-            <Link href="/rooms" style={{ border: '2px solid #FFFFFF', color: '#FFFFFF', fontWeight: 600, padding: isMobile ? '0.4rem 0.85rem' : '0.75rem 2rem', borderRadius: '9999px', background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#1A1A1A'; e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(255,255,255,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Book Now<svg style={{ width: '0.85rem', height: '0.85rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></Link>
+          {/* Hero Content */}
+          <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', textAlign: 'center', padding: isMobile ? '1rem' : '0 1rem', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+            <h1 style={{ fontSize: isMobile ? '1.2rem' : '3.5rem', fontWeight: 'bold', color: '#FFFFFF', textShadow: '0 2px 30px rgba(0,0,0,0.5)', margin: 0 }}>
+              {hotel?.tagline || 'Experience Luxury in the Heart of Shashamane'}
+            </h1>
+            <p style={{ fontSize: isMobile ? '0.75rem' : '1.2rem', color: '#FFFFFF', maxWidth: '672px', margin: isMobile ? '0.4rem auto 0.6rem' : '1rem auto 1.5rem', lineHeight: '1.4', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
+              Welcome to {hotelName}, where comfort meets elegance.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a href="#rooms" style={{ background: 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 100%)', color: '#1A1A1A', fontWeight: 600, padding: isMobile ? '0.4rem 0.85rem' : '0.75rem 2rem', borderRadius: '9999px', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(200,168,124,0.3)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Explore Rooms<svg style={{ width: '0.85rem', height: '0.85rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></a>
+              <Link href="/rooms" style={{ border: '2px solid #FFFFFF', color: '#FFFFFF', fontWeight: 600, padding: isMobile ? '0.4rem 0.85rem' : '0.75rem 2rem', borderRadius: '9999px', background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: isMobile ? '0.65rem' : '0.875rem', transition: 'all 0.3s ease', textDecoration: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#1A1A1A'; e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(255,255,255,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>Book Now<svg style={{ width: '0.85rem', height: '0.85rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></Link>
+            </div>
           </div>
-        </div>
-      </section>
-    </ScrollReveal>
+        </section>
+      </ScrollReveal>
+    </div>
   </div>
 
   {/* ─── CHECK-IN / BOOKING SEARCH BAR ─── */}
