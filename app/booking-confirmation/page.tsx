@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { GuestIcon, BedIcon } from '../components/Icons';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
-const GOLD = '#C8A87C';           // ✅ added
+const GOLD = '#C8A87C';
 const GOLD_GRADIENT = 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 100%)';
 const DARK_NAVY = '#17232E';
 const BEIGE = '#ECEAE6';
@@ -76,9 +76,39 @@ function ConfirmationContent() {
   };
 
   const nights = calculateNights(bookingData.checkIn, bookingData.checkOut);
-  const paymentMethodLabel = bookingData.paymentMethod === 'cash' ? 'Cash on Arrival' : 'Screenshot (pending verification)';
+  
+  // FIXED LOGIC: correctly identify cash vs bank transfer
+  const isCash = bookingData.paymentMethod === 'cash';
+  const paymentMethodLabel = isCash ? 'Cash on Arrival' : 'Bank Transfer (pending verification)';
 
-  const dashboardLink = bookingData.email ? `/dashboard?email=${encodeURIComponent(bookingData.email)}` : '/dashboard';
+  // ─── FIX: View Dashboard Handler ──────────────────────
+  const handleDashboardClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // 1. Check if user is already logged in
+    const token = localStorage.getItem('token') || localStorage.getItem('strapi_token');
+    if (token) {
+      window.location.href = '/dashboard';
+      return;
+    }
+
+    // 2. Check if user is registered by email
+    try {
+      const res = await fetch(`${STRAPI_URL}/api/users?filters[email][$eq]=${encodeURIComponent(bookingData.email)}`);
+      const data = await res.json();
+      
+      if (data && data.length > 0) {
+        // User exists, go to login
+        window.location.href = '/login';
+      } else {
+        // User does not exist (new), go to register
+        window.location.href = '/register';
+      }
+    } catch (error) {
+      // Fallback: if we can't check, treat as new user and go to register
+      window.location.href = '/register';
+    }
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: BEIGE, color: '#1A1A1A', paddingTop: isMobile ? '5rem' : '6.5rem' }}>
@@ -193,22 +223,22 @@ function ConfirmationContent() {
             </div>
           </div>
 
-          {/* ─── Payment Status ─── */}
+          {/* ─── Payment Status (FIXED TEXT LOGIC) ─── */}
           <div style={{ background: 'rgba(200,168,124,0.08)', border: '1px solid rgba(200,168,124,0.2)', borderRadius: '1rem', padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
               <i className="fas fa-credit-card" style={{ fontSize: '1.5rem', color: GOLD }}></i>
               <div>
                 <h3 style={{ fontWeight: 600, color: DARK_NAVY, fontSize: '0.9rem' }}>Payment Pending Verification</h3>
                 <p style={{ color: '#666666', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                  {bookingData.paymentMethod === 'screenshot'
-                    ? 'Your payment screenshot is being reviewed by our team. You will receive a confirmation email once verified.'
-                    : 'You have selected Cash on Arrival. Please have your payment ready upon check-in.'}
+                  {isCash
+                    ? 'You have selected Cash on Arrival. Please have your payment ready upon check-in.'
+                    : 'Your payment screenshot is being reviewed by our team. You will receive a confirmation email once verified.'}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* ─── Next Steps ─── */}
+          {/* ─── Next Steps (FIXED TEXT LOGIC) ─── */}
           <div style={{ background: '#F8F8F8', borderRadius: '1rem', padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
             <h3 style={{ fontWeight: 600, color: DARK_NAVY, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
               <i className="fas fa-list-ul" style={{ fontSize: '1.2rem', color: GOLD }}></i>
@@ -217,9 +247,9 @@ function ConfirmationContent() {
             <ul style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '0.35rem' : '0.5rem', paddingLeft: '0', margin: 0 }}>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', fontSize: '0.8rem', color: '#555' }}>
                 <span style={{ width: '20px', height: '20px', background: DARK_NAVY, color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 'bold', flexShrink: 0, marginTop: '0.1rem' }}>1</span>
-                {bookingData.paymentMethod === 'screenshot'
-                  ? 'Our team will review your payment screenshot within 24 hours.'
-                  : 'Your booking is confirmed – we look forward to welcoming you!'}
+                {isCash
+                  ? 'Your booking is confirmed – we look forward to welcoming you!'
+                  : 'Our team will review your payment screenshot within 24 hours.'}
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', fontSize: '0.8rem', color: '#555' }}>
                 <span style={{ width: '20px', height: '20px', background: DARK_NAVY, color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 'bold', flexShrink: 0, marginTop: '0.1rem' }}>2</span>
@@ -261,8 +291,11 @@ function ConfirmationContent() {
             >
               Return Home
             </Link>
-            <Link
-              href={dashboardLink}
+
+            {/* FIXED: View Dashboard Button with smart routing */}
+            <a
+              href="#"
+              onClick={handleDashboardClick}
               style={{
                 textAlign: 'center',
                 border: '2px solid #C8A87C',
@@ -274,6 +307,7 @@ function ConfirmationContent() {
                 transition: 'all 0.3s ease',
                 fontSize: '0.9rem',
                 background: 'transparent',
+                cursor: 'pointer',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = '#C8A87C';
@@ -287,7 +321,7 @@ function ConfirmationContent() {
               }}
             >
               View Dashboard
-            </Link>
+            </a>
           </div>
         </div>
       </section>
