@@ -81,7 +81,7 @@ function ConfirmationContent() {
   const isCash = bookingData.paymentMethod === 'cash';
   const paymentMethodLabel = isCash ? 'Cash on Arrival' : 'Bank Transfer (pending verification)';
 
-   // ─── FIX: View Dashboard Handler (Always check email to avoid empty dashboard) ───
+     // ─── FIX: View Dashboard Handler (Registered users → Login, New users → Register) ───
   const handleDashboardClick = async (e: React.MouseEvent) => {
     e.preventDefault();
 
@@ -91,21 +91,22 @@ function ConfirmationContent() {
       return;
     }
 
-    // Check if user exists in the system based on email
+    // Try to check if user exists in the system
     try {
       const res = await fetch(`${STRAPI_URL}/api/users?filters[email][$eq]=${encodeURIComponent(bookingData.email)}`);
       const data = await res.json();
       
       if (data && data.length > 0) {
-        // User is already registered -> Show Login page
+        // User is registered → Go to Login
         window.location.href = '/login';
       } else {
-        // User is brand new -> Show Register page
+        // User is new → Go to Register
         window.location.href = '/register';
       }
     } catch (error) {
-      // Fallback: if API fails for any reason, default to Register
-      window.location.href = '/register';
+      // If the API is blocked or fails, assume the user might be registered.
+      // Send them to login (they can register from there if needed).
+      window.location.href = '/login';
     }
   };
   return (
