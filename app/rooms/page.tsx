@@ -65,7 +65,7 @@ function RoomsContent() {
     async function fetchBookings() {
       if (!checkIn || !checkOut) return;
       try {
-        const res = await fetch(`${STRAPI_URL}/api/bookings?populate=room&filters[booking_status][$in]=Pending,Approved`);
+       const res = await fetch(`${STRAPI_URL}/api/booking-availability`);
         if (!res.ok) return;
         const data = await res.json();
         const bookings = data.data || [];

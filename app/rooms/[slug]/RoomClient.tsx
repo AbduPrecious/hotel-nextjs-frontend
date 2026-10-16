@@ -83,7 +83,7 @@ export default function RoomClient({ room, heroImage }: { room: any; heroImage: 
       const roomId = roomData?.documentId || roomData?.id;
       if (!roomId) return;
       try {
-        const res = await fetch(`${STRAPI_URL}/api/bookings?filters[room][documentId][$eq]=${roomId}&populate=room`);
+        const res = await fetch(`${STRAPI_URL}/api/booking-availability?room=${roomId}`);
         if (!res.ok) return;
         const data = await res.json();
         setBookingsForRoom(data.data || []);

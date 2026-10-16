@@ -81,34 +81,20 @@ function ConfirmationContent() {
   const isCash = bookingData.paymentMethod === 'cash';
   const paymentMethodLabel = isCash ? 'Cash on Arrival' : 'Bank Transfer (pending verification)';
 
-     // ─── FIX: View Dashboard Handler (Registered users → Login, New users → Register) ───
-  const handleDashboardClick = async (e: React.MouseEvent) => {
-    e.preventDefault();
+// ─── View Dashboard Handler (no email enumeration) ───
+const handleDashboardClick = (e: React.MouseEvent) => {
+  e.preventDefault();
+  const token =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('strapi_token') || localStorage.getItem('token')
+      : null;
 
-    // If no email was captured, send to register
-    if (!bookingData.email) {
-      window.location.href = '/register';
-      return;
-    }
-
-    // Try to check if user exists in the system
-    try {
-      const res = await fetch(`${STRAPI_URL}/api/users?filters[email][$eq]=${encodeURIComponent(bookingData.email)}`);
-      const data = await res.json();
-      
-      if (data && data.length > 0) {
-        // User is registered → Go to Login
-        window.location.href = '/login';
-      } else {
-        // User is new → Go to Register
-        window.location.href = '/register';
-      }
-    } catch (error) {
-      // If the API is blocked or fails, assume the user might be registered.
-      // Send them to login (they can register from there if needed).
-      window.location.href = '/login';
-    }
-  };
+  if (token) {
+    window.location.href = '/dashboard';
+  } else {
+    window.location.href = '/login';
+  }
+};
   return (
     <div style={{ minHeight: '100vh', background: BEIGE, color: '#1A1A1A', paddingTop: isMobile ? '5rem' : '6.5rem' }}>
       <style>{`

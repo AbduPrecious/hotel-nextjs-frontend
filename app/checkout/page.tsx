@@ -54,9 +54,11 @@ function CheckoutContent() {
     email: emailParam,
     phone: phoneParam,
     payment_method: 'bank_transfer',
-    screenshot: null as File | null,
+    payment_bank: 'cbe',
+    payment_reference: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [bookingDocId, setBookingDocId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -95,14 +97,7 @@ function CheckoutContent() {
     setFormData((prev) => ({
       ...prev,
       payment_method: value,
-      screenshot: null,
     }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData((prev) => ({ ...prev, screenshot: e.target.files![0] }));
-    }
   };
 
   const calculateDetails = () => {
@@ -115,132 +110,111 @@ function CheckoutContent() {
 
   const { nights, total } = calculateDetails();
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setSubmitting(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
 
-  const checkInDate = new Date(checkInParam!);
-  const checkOutDate = new Date(checkOutParam!);
-  if (checkOutDate <= checkInDate) {
-    showAlert('Check‑out must be after check‑in.', 'error');
-    setSubmitting(false);
-    return;
-  }
-
-  const paymentMethod = formData.payment_method;
-  if (paymentMethod === 'bank_transfer' && !formData.screenshot) {
-    showAlert('Please upload the bank transfer receipt or screenshot.', 'warning');
-    setSubmitting(false);
-    return;
-  }
-
-  // ─── 1. Get logged‑in user ID (if any) ──────────────────
-  let userId = null;
-  try {
-    const token = localStorage.getItem('token'); // adjust if you store it differently
-    if (token) {
-      const userRes = await fetch(`${STRAPI_URL}/api/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (userRes.ok) {
-        const userData = await userRes.json();
-        userId = userData.id; // Strapi user primary key (numeric or string)
-      } else {
-        console.warn('User not authenticated, booking will be unassigned.');
-      }
+    const checkInDate = new Date(checkInParam!);
+    const checkOutDate = new Date(checkOutParam!);
+    if (checkOutDate <= checkInDate) {
+      showAlert('Check‑out must be after check‑in.', 'error');
+      setSubmitting(false);
+      return;
     }
-  } catch (error) {
-    console.error('Failed to fetch user:', error);
-  }
 
-  // ─── 2. Prepare booking data ────────────────────────────
-  const bookingData: any = {
-    name: formData.name,
-    email: formData.email,
-    phone: formData.phone,
-    room: room.documentId,      // room relation uses documentId
-    check_in: checkInParam,
-    check_out: checkOutParam,
-    total: Number(total),
-    booking_status: 'Pending',
-    payment_method: paymentMethod,
+    const paymentMethod = formData.payment_method;
+    const reference = formData.payment_reference.trim();
+    if (paymentMethod === 'bank_transfer' && reference.length < 6) {
+      showAlert('Please enter the reference number from your payment receipt.', 'warning');
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      let docId = bookingDocId;
+
+      // 1) Create the booking once (a retry reuses it, no duplicates)
+      if (!docId) {
+        const bookingData: any = {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          room: room.documentId, // Strapi 5 uses documentId
+          check_in: checkInParam,
+          check_out: checkOutParam,
+          total: Number(total), // the server recalculates this itself
+          payment_method: paymentMethod,
+        };
+        if (paymentMethod === 'bank_transfer') {
+          bookingData.payment_bank = formData.payment_bank;
+          bookingData.payment_reference = reference;
+        }
+
+        const res = await fetch(`${STRAPI_URL}/api/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: bookingData }),
+        });
+        const responseText = await res.text();
+        if (!res.ok) {
+          console.error('❌ Strapi error:', responseText);
+          let message = 'Could not create your booking. Please try again.';
+          try {
+            const errJson = JSON.parse(responseText);
+            if (res.status === 400 && errJson?.error?.message) message = errJson.error.message;
+          } catch {
+            /* keep the generic message */
+          }
+          throw new Error(message);
+        }
+        docId = JSON.parse(responseText)?.data?.documentId;
+        if (!docId) throw new Error('Booking was created but no ID was returned.');
+        setBookingDocId(docId);
+      }
+
+      // 2) Verify the payment (bank transfer only)
+      let paymentStatus = 'cash';
+      if (paymentMethod === 'bank_transfer') {
+        const vRes = await fetch(`${STRAPI_URL}/api/bookings/${docId}/verify-payment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            payment_bank: formData.payment_bank,
+            payment_reference: reference,
+          }),
+        });
+        const vJson = await vRes.json().catch(() => ({}));
+        if (!vRes.ok) {
+          throw new Error(vJson?.error?.message || 'Could not verify your payment right now.');
+        }
+        paymentStatus = vJson.status; // 'verified' | 'failed' | 'pending'
+
+        if (paymentStatus === 'failed') {
+          showAlert(
+            vJson.message || 'We could not verify this payment. Check the reference number and try again.',
+            'error'
+          );
+          return; // stay on the page so the guest can fix the reference
+        }
+      }
+
+      const params = new URLSearchParams({
+        name: formData.name,
+        email: formData.email,
+        checkIn: checkInParam!,
+        checkOut: checkOutParam!,
+        totalPrice: total.toString(),
+        roomName: room.title,
+        paymentMethod,
+        paymentStatus,
+      });
+      router.push(`/booking-confirmation?${params.toString()}`);
+    } catch (error: any) {
+      showAlert(error.message || 'Something went wrong', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
-
-  // If the user is logged in, link the booking to them
-  if (userId) {
-    bookingData.user = userId;  // field name must match your Booking content‑type relation
-  }
-
-  try {
-    // ─── 3. Create the booking ─────────────────────────────
-    const res = await fetch(`${STRAPI_URL}/api/bookings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: bookingData }),
-    });
-
-    const responseText = await res.text();
-    if (!res.ok) {
-      console.error('❌ Booking creation error:', responseText);
-      throw new Error(`Booking creation failed (${res.status}): ${responseText}`);
-    }
-
-    const responseData = JSON.parse(responseText);
-    const docId = responseData?.data?.documentId;
-    if (!docId) throw new Error('No documentId returned from Strapi');
-
-    // ─── 4. Upload screenshot (if bank transfer) ──────────
-    if (paymentMethod === 'bank_transfer' && formData.screenshot) {
-      const fileFormData = new FormData();
-      fileFormData.append('files', formData.screenshot);
-
-      const uploadRes = await fetch(`${STRAPI_URL}/api/upload`, {
-        method: 'POST',
-        body: fileFormData,
-      });
-
-      if (!uploadRes.ok) {
-        const errText = await uploadRes.text();
-        console.error('❌ Upload error:', errText);
-        throw new Error(`File upload failed (${uploadRes.status}): ${errText}`);
-      }
-
-      const uploadData = await uploadRes.json();
-      const fileId = uploadData[0]?.id;
-      if (!fileId) throw new Error('No file id returned from upload');
-
-      // ─── 5. Attach screenshot to the booking ─────────────
-      const updatePayload = { data: { screenshot: fileId } };
-      const updateRes = await fetch(`${STRAPI_URL}/api/bookings/${docId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatePayload),
-      });
-
-      if (!updateRes.ok) {
-        const errText = await updateRes.text();
-        console.error('❌ Update error:', errText);
-        showAlert('Booking created, but screenshot attachment failed. Please contact support.', 'warning');
-      }
-    }
-
-    // ─── 6. Redirect to confirmation ────────────────────────
-    const params = new URLSearchParams({
-      name: formData.name,
-      email: formData.email,
-      checkIn: checkInParam!,
-      checkOut: checkOutParam!,
-      totalPrice: total.toString(),
-      roomName: room.title,
-      paymentMethod: paymentMethod,
-    });
-    router.push(`/booking-confirmation?${params.toString()}`);
-  } catch (error: any) {
-    showAlert(error.message || 'Something went wrong', 'error');
-  } finally {
-    setSubmitting(false);
-  }
-};
 
   const buildImageUrl = (relativeOrAbsolute: string | null) => {
     if (!relativeOrAbsolute) return null;
@@ -397,7 +371,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               gap: '2rem',
             }}
           >
-            {/* ─── LEFT: Room Summary (UPDATED: FULL IMAGE CARD) ─── */}
+            {/* ─── LEFT: Room Summary (FULL IMAGE CARD) ─── */}
             <ScrollReveal delay={100}>
               <div
                 style={{
@@ -521,8 +495,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                     No Room Image
                   </div>
                 )}
-                
-                {/* Added padding around the title section */}
+
+                {/* Title section */}
                 <div style={{ padding: '1.5rem' }}>
                   <h3
                     style={{
@@ -550,7 +524,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   </p>
                 </div>
 
-                {/* Added padding around the pricing section */}
+                {/* Pricing section */}
                 <div
                   style={{
                     borderTop: '1px solid #E8E8E8',
@@ -596,7 +570,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               </div>
             </ScrollReveal>
 
-            {/* ─── RIGHT: Form (UNTOUCHED) ─── */}
+            {/* ─── RIGHT: Form ─── */}
             <ScrollReveal delay={300}>
               <form
                 onSubmit={handleSubmit}
@@ -963,26 +937,80 @@ const handleSubmit = async (e: React.FormEvent) => {
                         marginBottom: '0.35rem',
                       }}
                     >
-                      Upload Bank Transfer Receipt/Screenshot *
+                      Which account did you pay? *
+                    </label>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                      {[
+                        { value: 'cbe', label: 'CBE' },
+                        { value: 'telebirr', label: 'Telebirr' },
+                      ].map((b) => (
+                        <label
+                          key={b.value}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            flex: 1,
+                            padding: '0.5rem 1rem',
+                            border: `2px solid ${formData.payment_bank === b.value ? GOLD : '#E0E0E0'}`,
+                            borderRadius: '0.5rem',
+                            cursor: 'pointer',
+                            background: formData.payment_bank === b.value ? '#F9F6F0' : 'transparent',
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="payment_bank"
+                            value={b.value}
+                            checked={formData.payment_bank === b.value}
+                            onChange={handleChange}
+                          />
+                          {b.label}
+                        </label>
+                      ))}
+                    </div>
+
+                    <label
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        color: '#777',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        display: 'block',
+                        marginBottom: '0.35rem',
+                      }}
+                    >
+                      {formData.payment_bank === 'telebirr'
+                        ? 'Telebirr Transaction Number *'
+                        : 'CBE Receipt ID or Receipt Link *'}
                     </label>
                     <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={handleFileChange}
+                      type="text"
+                      name="payment_reference"
+                      value={formData.payment_reference}
+                      onChange={handleChange}
                       required
+                      placeholder={
+                        formData.payment_bank === 'telebirr'
+                          ? 'e.g. DET8FJGUJ4'
+                          : 'Paste the receipt link or ID from CBE'
+                      }
                       style={{
                         width: '100%',
-                        padding: '0.5rem',
-                        border: '1px dashed #E0E0E0',
+                        padding: '0.7rem',
+                        border: '1px solid #E0E0E0',
                         borderRadius: '0.5rem',
                         outline: 'none',
                       }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = GOLD)}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = '#E0E0E0')}
                     />
-                    {formData.screenshot && (
-                      <p style={{ fontSize: '0.75rem', color: GOLD, marginTop: '0.25rem' }}>
-                        {formData.screenshot.name} uploaded
-                      </p>
-                    )}
+                    <p style={{ fontSize: '0.75rem', color: '#777', marginTop: '0.4rem' }}>
+                      Send exactly ETB {total} to the account above, then enter the reference from your
+                      payment confirmation. We verify it automatically.
+                    </p>
                   </div>
                 )}
 
@@ -1015,7 +1043,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                     }
                   }}
                 >
-                  {submitting ? 'Processing...' : 'Confirm Booking'}
+                  {submitting
+                    ? formData.payment_method === 'bank_transfer'
+                      ? 'Verifying payment...'
+                      : 'Processing...'
+                    : 'Confirm Booking'}
                 </button>
               </form>
             </ScrollReveal>
