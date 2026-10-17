@@ -13,20 +13,17 @@ const GOLD = '#C8A87C';
 const DARK_NAVY = '#17232E';
 const BEIGE = '#ECEAE6';
 
-// ─── Default hints (fallback if Strapi hint is empty) ───
 const DEFAULT_HINTS: Record<string, string> = {
-  cbe: 'Open your CBE app → Transactions → tap the payment → copy the Reference ID (usually starts with "FT" and is 12+ characters).',
-  telebirr: 'Check the Telebirr SMS you received → find the code labeled "Transaction ID" (e.g. DET8FJGUJ4).',
-  awash: 'Open your Awash app or SMS → copy the Reference Number from the receipt.',
-  siinqee: 'Open your Siinqee app or SMS → copy the Reference Number from the receipt.',
-  coopay:
-    'Open the Coopay Ebirr SMS → copy the receipt LINK (starts with http) or the case-sensitive token. The plain SMS ref number alone will NOT work.',
+  cbe: 'CBE app → Transactions → tap the payment → Reference ID (starts with "FT").',
+  telebirr: 'Check your Telebirr SMS → find the code labeled "Transaction ID".',
+  awash: 'Open your Awash app or SMS → copy the Reference Number.',
+  siinqee: 'Open your Siinqee app or SMS → copy the Reference Number.',
+  coopay: 'Open the Coopay SMS → copy the receipt LINK (http…) or token. The plain SMS ref will NOT work.',
 };
 
 const DEFAULT_SUPPORT_PHONE = '+251 911 000 000';
 const DEFAULT_SUPPORT_EMAIL = 'booking@qafffamilyhotel.com';
 
-// ─── Internal bank type ───
 type Bank = {
   bank_code: string;
   display_name: string;
@@ -49,48 +46,37 @@ function getMediaUrl(media: any): string | null {
   return null;
 }
 
-function buildImageUrl(relativeOrAbsolute: string | null): string | null {
-  if (!relativeOrAbsolute) return null;
-  if (relativeOrAbsolute.startsWith('http')) return relativeOrAbsolute;
+function buildImageUrl(rel: string | null): string | null {
+  if (!rel) return null;
+  if (rel.startsWith('http')) return rel;
   const base = STRAPI_URL.endsWith('/') ? STRAPI_URL.slice(0, -1) : STRAPI_URL;
-  const path = relativeOrAbsolute.startsWith('/')
-    ? relativeOrAbsolute
-    : `/${relativeOrAbsolute}`;
-  return `${base}${path}`;
+  return `${base}${rel.startsWith('/') ? rel : `/${rel}`}`;
 }
 
 function shortLabel(name: string): string {
-  // For fallback circle icon — take first 3-4 letters, uppercase
   const cleaned = name.replace(/[^A-Za-z ]/g, '').trim();
   if (!cleaned) return '?';
   const words = cleaned.split(/\s+/);
   if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
-  return words
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 4)
-    .toUpperCase();
+  return words.map((w) => w[0]).join('').slice(0, 4).toUpperCase();
 }
 
-function referenceLabelFor(code: string, display: string): string {
+function refPlaceholderFor(code: string): string {
+  if (code === 'cbe') return 'FT25XXXXXXXX or receipt link';
+  if (code === 'telebirr') return 'e.g. DET8FJGUJ4';
+  if (code === 'coopay') return 'Receipt link (http…) or token';
+  return 'Reference number';
+}
+
+function refLabelFor(code: string, display: string): string {
   if (code === 'cbe') return 'CBE Reference ID';
   if (code === 'telebirr') return 'Telebirr Transaction ID';
-  if (code === 'coopay') return 'Coopay Receipt Link or Token';
-  if (code === 'awash') return 'Awash Reference Number';
-  if (code === 'siinqee') return 'Siinqee Reference Number';
+  if (code === 'coopay') return 'Coopay Link or Token';
+  if (code === 'awash') return 'Awash Reference';
+  if (code === 'siinqee') return 'Siinqee Reference';
   return `${display} Reference`;
 }
 
-function referencePlaceholderFor(code: string): string {
-  if (code === 'cbe') return 'e.g. FT25XXXXXXXX or receipt link';
-  if (code === 'telebirr') return 'e.g. DET8FJGUJ4';
-  if (code === 'coopay') return 'Receipt link (http...) or token';
-  if (code === 'awash') return 'e.g. AW12345678';
-  if (code === 'siinqee') return 'e.g. SQ12345678';
-  return 'Enter reference number';
-}
-
-// ─── Build a Bank object from Strapi's dynamic `banks[]` component ───
 function bankFromComponent(entry: any): Bank {
   const code = String(entry.bank_code || '').trim();
   const display = entry.display_name || code.toUpperCase();
@@ -101,95 +87,46 @@ function bankFromComponent(entry: any): Bank {
     qr_url: buildImageUrl(getMediaUrl(entry.qr_code)),
     account_name: entry.account_name || null,
     account_number: entry.account_number || null,
-    reference_label: entry.reference_label || referenceLabelFor(code, display),
-    reference_hint: entry.reference_hint || DEFAULT_HINTS[code] || `Find the reference for ${display} in your app or SMS.`,
-    reference_placeholder:
-      entry.reference_placeholder || referencePlaceholderFor(code),
+    reference_label: entry.reference_label || refLabelFor(code, display),
+    reference_hint: entry.reference_hint || DEFAULT_HINTS[code] || `Find the reference for ${display}.`,
+    reference_placeholder: refPlaceholderFor(code),
   };
 }
 
-// ─── Legacy fallback: build CBE + Telebirr from old flat fields ───
-function legacyBanks(pm: any): Bank[] {
-  if (!pm) return [];
-  const out: Bank[] = [];
-  if (pm.cbe_account_number || pm.cbe_qr_code) {
-    out.push({
-      bank_code: 'cbe',
-      display_name: pm.cbe_display_name || pm.cbe_bank_name || 'Commercial Bank of Ethiopia',
-      logo_url: buildImageUrl(getMediaUrl(pm.cbe_logo)),
-      qr_url: buildImageUrl(getMediaUrl(pm.cbe_qr_code)),
-      account_name: pm.cbe_account_name || null,
-      account_number: pm.cbe_account_number || null,
-      reference_label: 'CBE Reference ID',
-      reference_hint: pm.cbe_reference_hint || DEFAULT_HINTS.cbe,
-      reference_placeholder: referencePlaceholderFor('cbe'),
-    });
-  }
-  if (pm.telebirr_number || pm.telebirr_qr_code) {
-    out.push({
-      bank_code: 'telebirr',
-      display_name: pm.telebirr_display_name || 'Telebirr',
-      logo_url: buildImageUrl(getMediaUrl(pm.telebirr_logo)),
-      qr_url: buildImageUrl(getMediaUrl(pm.telebirr_qr_code)),
-      account_name: pm.telebirr_name || null,
-      account_number: pm.telebirr_number || null,
-      reference_label: 'Telebirr Transaction ID',
-      reference_hint: pm.telebirr_reference_hint || DEFAULT_HINTS.telebirr,
-      reference_placeholder: referencePlaceholderFor('telebirr'),
-    });
-  }
-  return out;
-}
-
-// ═══════════════════════════════════════════════════════════
-// MAIN CHECKOUT
-// ═══════════════════════════════════════════════════════════
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const roomId = searchParams.get('roomId');
   const checkInParam = searchParams.get('checkIn');
   const checkOutParam = searchParams.get('checkOut');
-  const nameParam = searchParams.get('name') || '';
-  const emailParam = searchParams.get('email') || '';
-  const phoneParam = searchParams.get('phone') || '';
+  const nameFromUrl = searchParams.get('name') || '';
+  const emailFromUrl = searchParams.get('email') || '';
+  const phoneFromUrl = searchParams.get('phone') || '';
 
   const [room, setRoom] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-
   const [paymentMethods, setPaymentMethods] = useState<any>(null);
   const [banks, setBanks] = useState<Bank[]>([]);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [showQr, setShowQr] = useState(false);
 
-  const { showAlert } = useAlert();
+  const [guestName, setGuestName] = useState(nameFromUrl);
+  const [guestEmail, setGuestEmail] = useState(emailFromUrl);
+  const [guestPhone, setGuestPhone] = useState(phoneFromUrl);
+  const needsDetails = !nameFromUrl || !emailFromUrl || !phoneFromUrl;
 
-  const [failedState, setFailedState] = useState<{
-    show: boolean;
-    message: string;
-    reference: string;
-  }>({ show: false, message: '', reference: '' });
-
+  const [paymentBank, setPaymentBank] = useState('');
+  const [verifyMode, setVerifyMode] = useState<'reference' | 'image'>('reference');
+  const [reference, setReference] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showQr, setShowQr] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const goToPrevPhoto = () =>
-    setCurrentPhotoIndex((prev) => (prev === 0 ? room.photos.length - 1 : prev - 1));
-  const goToNextPhoto = () =>
-    setCurrentPhotoIndex((prev) => (prev === room.photos.length - 1 ? 0 : prev + 1));
-
-  const [formData, setFormData] = useState({
-    name: nameParam,
-    email: emailParam,
-    phone: phoneParam,
-    payment_method: 'bank_transfer',
-    payment_bank: '',
-    payment_reference: '',
-  });
   const [submitting, setSubmitting] = useState(false);
   const [bookingDocId, setBookingDocId] = useState<string | null>(null);
+
+  const { showAlert } = useAlert();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -204,262 +141,164 @@ function CheckoutContent() {
       try {
         const [roomData, paymentRes] = await Promise.all([
           getRoomById(roomId),
-      fetch(`${STRAPI_URL}/api/payment-method?populate[banks][populate]=*`),
+          fetch(`${STRAPI_URL}/api/payment-method?populate[banks][populate]=*`),
         ]);
         setRoom(roomData);
-
         let pm: any = null;
         try {
-          const paymentJson = await paymentRes.json();
-          pm = paymentJson.data?.attributes || paymentJson.data;
+          const json = await paymentRes.json();
+          pm = json?.data?.attributes || json?.data || null;
         } catch {
-          // If populate=deep failed, retry with populate=*
-          try {
-            const retry = await fetch(`${STRAPI_URL}/api/payment-method?populate=*`);
-            const retryJson = await retry.json();
-            pm = retryJson.data?.attributes || retryJson.data;
-          } catch {
-            /* ignore */
-          }
+          pm = null;
         }
-
         setPaymentMethods(pm);
 
-        // Prefer new `banks[]` component; fall back to legacy cbe/telebirr
         let list: Bank[] = [];
         if (pm?.banks && Array.isArray(pm.banks) && pm.banks.length > 0) {
-          list = pm.banks
-            .map(bankFromComponent)
-            .filter((b: Bank) => !!b.bank_code);
-        } else {
-          list = legacyBanks(pm);
+          list = pm.banks.map(bankFromComponent).filter((b: Bank) => !!b.bank_code);
         }
-
         setBanks(list);
-        // Auto-select first bank
-        if (list.length > 0) {
-          setFormData((prev) => ({ ...prev, payment_bank: list[0].bank_code }));
-        }
+        if (list.length > 0) setPaymentBank(list[0].bank_code);
         setLoading(false);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
+      } catch (e) {
+        console.error(e);
         setLoading(false);
       }
     }
     fetchData();
   }, [roomId]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (name === 'payment_reference' || name === 'payment_bank') {
-      setFailedState({ show: false, message: '', reference: '' });
-      setImageFile(null);
+  const calculateDetails = () => {
+    if (!checkInParam || !checkOutParam || !room) return { nights: 0, total: 0 };
+    const inD = new Date(checkInParam);
+    const outD = new Date(checkOutParam);
+    const nights = Math.ceil((outD.getTime() - inD.getTime()) / 86400000);
+    return { nights: nights > 0 ? nights : 0, total: nights > 0 ? nights * room.price : 0 };
+  };
+  const { nights, total } = calculateDetails();
+
+  const goToPrevPhoto = () => {
+    if (!room?.photos?.length) return;
+    setCurrentPhotoIndex((p) => (p === 0 ? room.photos.length - 1 : p - 1));
+  };
+  const goToNextPhoto = () => {
+    if (!room?.photos?.length) return;
+    setCurrentPhotoIndex((p) => (p === room.photos.length - 1 ? 0 : p + 1));
+  };
+
+  const copyAccountNumber = async () => {
+    const selectedBank = banks.find((b) => b.bank_code === paymentBank);
+    if (!selectedBank?.account_number) return;
+    try {
+      await navigator.clipboard.writeText(selectedBank.account_number);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      showAlert('Could not copy. Please select and copy manually.', 'warning');
     }
   };
 
-  const handlePaymentMethodChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFormData((prev) => ({ ...prev, payment_method: value }));
-    setFailedState({ show: false, message: '', reference: '' });
-    setImageFile(null);
-  };
-
-  const handleBankChange = (bankCode: string) => {
-    setFormData((prev) => ({ ...prev, payment_bank: bankCode }));
-    setFailedState({ show: false, message: '', reference: '' });
-    setImageFile(null);
-    setShowQr(false); // collapse QR when switching banks
-  };
-
-  const calculateDetails = () => {
-    if (!checkInParam || !checkOutParam || !room) return { nights: 0, total: 0 };
-    const inDate = new Date(checkInParam);
-    const outDate = new Date(checkOutParam);
-    const nights = Math.ceil(
-      (outDate.getTime() - inDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    return { nights: nights > 0 ? nights : 0, total: nights > 0 ? nights * room.price : 0 };
-  };
-
-  const { nights, total } = calculateDetails();
-
   const ensureBooking = async (): Promise<string> => {
     if (bookingDocId) return bookingDocId;
-
-    const paymentMethod = formData.payment_method;
-    const reference = formData.payment_reference.trim();
-
-    const bookingData: any = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
+    const data: any = {
+      name: guestName,
+      email: guestEmail,
+      phone: guestPhone,
       room: room.documentId,
       check_in: checkInParam,
       check_out: checkOutParam,
       total: Number(total),
-      payment_method: paymentMethod,
+      payment_method: 'bank_transfer',
+      payment_bank: paymentBank,
     };
-    if (paymentMethod === 'bank_transfer') {
-      bookingData.payment_bank = formData.payment_bank;
-      bookingData.payment_reference = reference;
+    if (verifyMode === 'reference' && reference.trim()) {
+      data.payment_reference = reference.trim();
     }
-
     const res = await fetch(`${STRAPI_URL}/api/bookings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: bookingData }),
+      body: JSON.stringify({ data }),
     });
-    const responseText = await res.text();
+    const txt = await res.text();
     if (!res.ok) {
-      console.error('❌ Strapi error:', responseText);
-      let message = 'Could not create your booking. Please try again.';
+      let msg = 'Could not create your booking.';
       try {
-        const errJson = JSON.parse(responseText);
-        if (res.status === 400 && errJson?.error?.message) message = errJson.error.message;
-      } catch {
-        /* keep generic */
-      }
-      throw new Error(message);
+        const j = JSON.parse(txt);
+        if (j?.error?.message) msg = j.error.message;
+      } catch {}
+      throw new Error(msg);
     }
-    const docId = JSON.parse(responseText)?.data?.documentId;
-    if (!docId) throw new Error('Booking was created but no ID was returned.');
-    setBookingDocId(docId);
-    return docId;
+    const id = JSON.parse(txt)?.data?.documentId;
+    if (!id) throw new Error('No booking ID returned.');
+    setBookingDocId(id);
+    return id;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim()) {
+      showAlert('Please enter your name, email and phone.', 'warning');
+      return;
+    }
+    if (verifyMode === 'reference' && reference.trim().length < 4) {
+      showAlert('Please enter the reference number.', 'warning');
+      return;
+    }
+    if (verifyMode === 'image' && !imageFile) {
+      showAlert('Please choose a receipt image.', 'warning');
+      return;
+    }
     setSubmitting(true);
-
-    const checkInDate = new Date(checkInParam!);
-    const checkOutDate = new Date(checkOutParam!);
-    if (checkOutDate <= checkInDate) {
-      showAlert('Check-out must be after check-in.', 'error');
-      setSubmitting(false);
-      return;
-    }
-
-    const paymentMethod = formData.payment_method;
-    const reference = formData.payment_reference.trim();
-    if (paymentMethod === 'bank_transfer' && reference.length < 6) {
-      showAlert('Please enter the reference number from your payment receipt.', 'warning');
-      setSubmitting(false);
-      return;
-    }
 
     try {
       const docId = await ensureBooking();
+      let status = 'pending';
+      let message = '';
 
-      let paymentStatus = 'cash';
-      if (paymentMethod === 'bank_transfer') {
-        const vRes = await fetch(`${STRAPI_URL}/api/bookings/${docId}/verify-payment`, {
+      if (verifyMode === 'reference') {
+        const r = await fetch(`${STRAPI_URL}/api/bookings/${docId}/verify-payment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            payment_bank: formData.payment_bank,
-            payment_reference: reference,
+            payment_bank: paymentBank,
+            payment_reference: reference.trim(),
           }),
         });
-        const vJson = await vRes.json().catch(() => ({}));
-        if (!vRes.ok) {
-          throw new Error(vJson?.error?.message || 'Could not verify your payment right now.');
-        }
-        paymentStatus = vJson.status;
-
-        if (paymentStatus === 'failed') {
-          setFailedState({
-            show: true,
-            message:
-              vJson.message ||
-              'We could not find this reference. Try a different one, or upload your receipt image.',
-            reference,
-          });
-          showAlert(
-            vJson.message || 'We could not verify this payment. Please try the options below.',
-            'error'
-          );
-          setSubmitting(false);
-          return;
-        }
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j?.error?.message || 'Could not verify.');
+        status = j.status;
+        message = j.message || '';
+      } else {
+        const fd = new FormData();
+        fd.append('image', imageFile!);
+        fd.append('payment_bank', paymentBank);
+        const r = await fetch(`${STRAPI_URL}/api/bookings/${docId}/verify-payment-image`, { method: 'POST', body: fd });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j?.error?.message || 'Could not verify image.');
+        status = j.status;
+        message = j.message || '';
       }
 
-      const params = new URLSearchParams({
-        name: formData.name,
-        email: formData.email,
-        checkIn: checkInParam!,
-        checkOut: checkOutParam!,
-        totalPrice: total.toString(),
-        roomName: room.title,
-        paymentMethod,
-        paymentStatus,
-      });
-      router.push(`/booking-confirmation?${params.toString()}`);
-    } catch (error: any) {
-      showAlert(error.message || 'Something went wrong', 'error');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleImageVerify = async () => {
-    if (!imageFile) {
-      showAlert('Please choose an image first.', 'warning');
-      return;
-    }
-    if (!bookingDocId) {
-      showAlert('Booking missing. Please submit the form first.', 'error');
-      return;
-    }
-    setUploadingImage(true);
-
-    try {
-      const fd = new FormData();
-      fd.append('image', imageFile);
-      fd.append('payment_bank', formData.payment_bank);
-
-      const res = await fetch(
-        `${STRAPI_URL}/api/bookings/${bookingDocId}/verify-payment-image`,
-        { method: 'POST', body: fd }
-      );
-      const json = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(json?.error?.message || 'Could not verify the image right now.');
-      }
-
-      const status = json.status;
-      if (status === 'verified') {
+      if (status === 'verified' || status === 'pending') {
         const params = new URLSearchParams({
-          name: formData.name,
-          email: formData.email,
+          name: guestName,
+          email: guestEmail,
           checkIn: checkInParam!,
           checkOut: checkOutParam!,
           totalPrice: total.toString(),
           roomName: room.title,
-          paymentMethod: formData.payment_method,
-          paymentStatus: 'verified',
+          paymentMethod: 'bank_transfer',
+          paymentStatus: status,
         });
         router.push(`/booking-confirmation?${params.toString()}`);
         return;
       }
 
-      if (status === 'failed') {
-        showAlert(
-          json.message || 'We still could not verify this receipt. Please contact support.',
-          'error'
-        );
-      } else {
-        showAlert(
-          json.message ||
-            'Your receipt is being checked. Please wait a moment and try again.',
-          'warning'
-        );
-      }
-    } catch (error: any) {
-      showAlert(error.message || 'Image verification failed.', 'error');
+      showAlert(message || 'We could not verify this payment. Please check the details and try again.', 'error');
+    } catch (err: any) {
+      showAlert(err.message || 'Something went wrong.', 'error');
     } finally {
-      setUploadingImage(false);
+      setSubmitting(false);
     }
   };
 
@@ -467,56 +306,16 @@ function CheckoutContent() {
   const supportEmail = paymentMethods?.support_email || DEFAULT_SUPPORT_EMAIL;
 
   if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: BEIGE,
-        }}
-      >
-        Loading Checkout...
-      </div>
-    );
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BEIGE }}>Loading…</div>;
   }
 
   if (!room || !roomId) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: BEIGE,
-          padding: '1rem',
-        }}
-      >
-        <div
-          style={{
-            background: '#FFFFFF',
-            borderRadius: '1rem',
-            padding: '2rem',
-            textAlign: 'center',
-            maxWidth: '400px',
-          }}
-        >
-          <h2 style={{ color: DARK_NAVY }}>Oops!</h2>
-          <p style={{ color: '#666' }}>No room selected. Please select a room to book.</p>
-          <Link
-            href="/rooms"
-            style={{
-              display: 'inline-block',
-              background: DARK_NAVY,
-              color: '#FFFFFF',
-              padding: '0.7rem 2rem',
-              borderRadius: '9999px',
-              textDecoration: 'none',
-              marginTop: '1rem',
-            }}
-          >
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BEIGE, padding: '1rem' }}>
+        <div style={{ background: '#fff', borderRadius: '1rem', padding: '2rem', textAlign: 'center', maxWidth: '400px' }}>
+          <h2 style={{ color: DARK_NAVY }}>No room selected</h2>
+          <p style={{ color: '#666' }}>Please pick a room first.</p>
+          <Link href="/rooms" style={{ display: 'inline-block', background: DARK_NAVY, color: '#fff', padding: '0.7rem 2rem', borderRadius: '9999px', textDecoration: 'none', marginTop: '1rem' }}>
             Browse Rooms
           </Link>
         </div>
@@ -524,7 +323,15 @@ function CheckoutContent() {
     );
   }
 
-  const selectedBank = banks.find((b) => b.bank_code === formData.payment_bank) || banks[0];
+  const selectedBank = banks.find((b) => b.bank_code === paymentBank) || banks[0];
+
+  const changeLinkParams = new URLSearchParams({
+    name: guestName,
+    email: guestEmail,
+    phone: guestPhone,
+    checkIn: checkInParam || '',
+    checkOut: checkOutParam || '',
+  });
 
   return (
     <>
@@ -535,143 +342,61 @@ function CheckoutContent() {
         }
         .animate-in { animation: fadeInUp 0.8s ease forwards; opacity: 0; }
 
-        .contact-hero {
-          background: ${DARK_NAVY};
-          padding: 3rem 1rem;
-          text-align: center;
-          border-bottom: 3px solid ${GOLD};
-        }
-        .contact-hero .breadcrumb {
-          font-size: 0.7rem;
-          color: ${GOLD};
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          margin-bottom: 0.5rem;
-        }
-        .contact-hero .breadcrumb a {
-          color: ${GOLD};
-          text-decoration: none;
-          transition: color 0.3s ease;
-        }
+        .contact-hero { background: ${DARK_NAVY}; padding: 3rem 1rem; text-align: center; border-bottom: 3px solid ${GOLD}; }
+        .contact-hero .breadcrumb { font-size: 0.7rem; color: ${GOLD}; display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; flex-wrap: wrap; }
+        .contact-hero .breadcrumb a { color: ${GOLD}; text-decoration: none; transition: color 0.3s ease; }
         .contact-hero .breadcrumb a:hover { color: white; }
-        .contact-hero h1 {
-          font-size: 2.5rem;
-          font-weight: 700;
-          color: white;
-          margin-bottom: 0.25rem;
-          letter-spacing: 0.02em;
-        }
-        .contact-hero p {
-          font-size: 0.9rem;
-          color: rgba(255,255,255,0.7);
-          max-width: 672px;
-          margin: 0 auto;
-          font-weight: 300;
-          line-height: 1.6;
+        .contact-hero h1 { font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 0.25rem; letter-spacing: 0.02em; }
+        .contact-hero p { font-size: 0.9rem; color: rgba(255,255,255,0.7); max-width: 672px; margin: 0 auto; font-weight: 300; line-height: 1.6; }
+        @media (max-width: 768px) { .contact-hero h1 { font-size: 1.8rem; } }
+
+        .ck-label { font-size: 0.68rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; display: block; }
+        .ck-input { width: 100%; padding: 0.7rem 0.85rem; border: 1px solid #E0E0E0; border-radius: 0.5rem; outline: none; font-size: 0.9rem; transition: border 0.2s; background: #FDFDFD; }
+        .ck-input:focus { border-color: ${GOLD}; background: #fff; }
+        .ck-btn { width: 100%; padding: 0.9rem; background: ${DARK_NAVY}; color: #fff; font-weight: 700; border: none; border-radius: 0.5rem; font-size: 0.9rem; cursor: pointer; transition: background 0.2s; }
+        .ck-btn:hover:not(:disabled) { background: ${GOLD}; color: ${DARK_NAVY}; }
+        .ck-btn:disabled { opacity: 0.6; cursor: wait; }
+
+        .bank-tile {
+          width: 110px; height: 64px;
+          display: flex; align-items: center; justify-content: center;
+          border-radius: 0.6rem;
+          border: 2px solid #E8E8E8; background: #fff;
+          cursor: pointer; transition: all 0.15s ease;
+          padding: 8px;
+          flex: 0 0 auto;
         }
         @media (max-width: 768px) {
-          .contact-hero h1 { font-size: 2rem; }
+          .bank-tile { width: 90px; height: 56px; padding: 6px; }
         }
+        .bank-tile:hover { border-color: #C8A87C; transform: translateY(-1px); }
+        .bank-tile.sel { border-color: ${GOLD}; background: #FBF7F0; box-shadow: 0 4px 12px rgba(200,168,124,0.18); }
+        .bank-logo-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .bank-logo-fallback { width: 100%; height: 100%; border-radius: 0.4rem; background: ${DARK_NAVY}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; }
 
-        .bank-icon-btn {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 0.4rem;
-          padding: 0.6rem 0.5rem;
-          border-radius: 0.75rem;
-          border: 2px solid #E0E0E0;
-          background: #FFFFFF;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          flex: 1 1 calc(33.333% - 0.5rem);
-          min-width: 90px;
-          max-width: 140px;
+        .copy-btn {
+          background: transparent; border: 1px solid #C8A87C; color: ${DARK_NAVY};
+          font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.5rem;
+          border-radius: 0.35rem; cursor: pointer; transition: all 0.15s;
+          display: inline-flex; align-items: center; gap: 0.2rem; margin-left: 0.5rem;
+          vertical-align: middle;
         }
-        .bank-icon-btn:hover {
-          border-color: #C8A87C;
-          transform: translateY(-2px);
-        }
-        .bank-icon-btn.selected {
-          border-color: ${GOLD};
-          background: #F9F6F0;
-          box-shadow: 0 4px 12px rgba(200,168,124,0.2);
-        }
-        .bank-icon-img {
-          width: 40px;
-          height: 40px;
-          object-fit: contain;
-        }
-        .bank-icon-fallback {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background: ${DARK_NAVY};
-          color: #FFFFFF;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 0.7rem;
-          letter-spacing: 0.03em;
-        }
-        .bank-icon-label {
-          font-size: 0.68rem;
-          font-weight: 600;
-          color: ${DARK_NAVY};
-          text-align: center;
-          line-height: 1.15;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-        }
+        .copy-btn:hover { background: #FBF7F0; }
+        .copy-btn.copied { background: #E8F5E9; border-color: #4CAF50; color: #2E7D32; }
 
-        .show-qr-btn {
-          background: transparent;
-          border: 1px dashed ${GOLD};
-          color: ${DARK_NAVY};
-          padding: 0.35rem 0.75rem;
-          border-radius: 0.5rem;
-          font-size: 0.75rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          margin-top: 0.4rem;
+        .ck-toggle { display: flex; gap: 0.5rem; }
+        .ck-toggle label {
+          flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+          padding: 0.65rem; border: 2px solid #E0E0E0; border-radius: 0.5rem;
+          cursor: pointer; font-size: 0.8rem; font-weight: 600; color: ${DARK_NAVY};
+          background: #fff; transition: all 0.15s;
         }
-        .show-qr-btn:hover {
-          background: #F9F6F0;
-        }
-        .qr-expand {
-          margin-top: 0.75rem;
-          padding: 0.75rem;
-          background: #FFFFFF;
-          border: 1px solid #E8E8E8;
-          border-radius: 0.5rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          animation: fadeInUp 0.3s ease;
-        }
+        .ck-toggle label.sel { border-color: ${GOLD}; background: #FBF7F0; }
       `}</style>
 
-      <div
-        style={{
-          minHeight: '100vh',
-          background: BEIGE,
-          paddingTop: isMobile ? '5rem' : '6.5rem',
-        }}
-      >
-        <div
-          className="contact-hero animate-in"
-          style={{ padding: isMobile ? '4rem 1rem' : '5rem 1rem' }}
-        >
+      <div style={{ minHeight: '100vh', background: BEIGE, paddingTop: isMobile ? '5rem' : '6.5rem' }}>
+        {/* HERO */}
+        <div className="contact-hero animate-in" style={{ padding: isMobile ? '2.5rem 1rem' : '4rem 1rem' }}>
           <div className="breadcrumb">
             <Link href="/">Home</Link>
             <span>/</span>
@@ -689,715 +414,209 @@ function CheckoutContent() {
           </p>
         </div>
 
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1rem' }}>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-              gap: '2rem',
-            }}
-          >
-            {/* ─── LEFT: Room Summary ─── */}
-            <ScrollReveal delay={100}>
-              <div
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: '1.5rem',
-                  overflow: 'hidden',
-                  boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                {room.photos && room.photos.length > 0 ? (
-                  <div
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      height: isMobile ? '220px' : '300px',
-                      flexShrink: 0,
-                      background: '#F0F0F0',
-                    }}
-                  >
-                    <img
-                      src={`${STRAPI_URL}${room.photos[currentPhotoIndex].url}`}
-                      alt={`${room.title} - slide ${currentPhotoIndex + 1}`}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        display: 'block',
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: '1rem',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: 'rgba(0,0,0,0.6)',
-                        color: 'white',
-                        padding: '0.2rem 0.8rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      {currentPhotoIndex + 1} / {room.photos.length}
-                    </div>
-                    <button
-                      onClick={goToPrevPhoto}
-                      type="button"
-                      style={{
-                        position: 'absolute',
-                        left: '0.5rem',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'rgba(0,0,0,0.5)',
-                        backdropFilter: 'blur(4px)',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: isMobile ? '32px' : '40px',
-                        height: isMobile ? '32px' : '40px',
-                        color: 'white',
-                        cursor: 'pointer',
-                        fontSize: isMobile ? '1rem' : '1.2rem',
-                      }}
-                    >
-                      ‹
-                    </button>
-                    <button
-                      onClick={goToNextPhoto}
-                      type="button"
-                      style={{
-                        position: 'absolute',
-                        right: '0.5rem',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'rgba(0,0,0,0.5)',
-                        backdropFilter: 'blur(4px)',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: isMobile ? '32px' : '40px',
-                        height: isMobile ? '32px' : '40px',
-                        color: 'white',
-                        cursor: 'pointer',
-                        fontSize: isMobile ? '1rem' : '1.2rem',
-                      }}
-                    >
-                      ›
-                    </button>
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      width: '100%',
-                      height: isMobile ? '220px' : '300px',
-                      background: '#F0F0F0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#999',
-                    }}
-                  >
-                    No Room Image
-                  </div>
-                )}
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: isMobile ? '1.25rem 0.85rem' : '2rem 1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '1rem' : '1.5rem' }}>
 
-                <div style={{ padding: '1.5rem' }}>
-                  <h3
-                    style={{
-                      fontSize: '1.3rem',
-                      fontWeight: 600,
-                      color: DARK_NAVY,
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    {room.title}
+            {/* LEFT column — Your Details on TOP, then room card */}
+            <ScrollReveal delay={100}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '0.85rem' : '1rem' }}>
+
+                {/* Guest details — MOVED TO TOP */}
+                <div style={{ background: '#FFFFFF', borderRadius: '1rem', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', padding: isMobile ? '1rem' : '1.25rem 1.5rem' }}>
+                  <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: DARK_NAVY, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    Your Details
+                    <Link href={`/rooms/${room.documentId || room.id}?${changeLinkParams.toString()}`} style={{ fontSize: '0.72rem', color: GOLD, textDecoration: 'underline', fontWeight: 500, marginLeft: 'auto' }}>
+                      Change
+                    </Link>
                   </h3>
-                  <p
-                    style={{
-                      color: '#666',
-                      fontSize: '0.85rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <GuestIcon size={16} color="#666" /> {room.capacity || 4} Guests
-                    <span style={{ color: '#ccc' }}></span>
-                    <BedIcon size={16} color="#666" /> {room.bed_type || '2 Beds'}
-                  </p>
+                  {needsDetails ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <input className="ck-input" placeholder="Full name" value={guestName} onChange={(e) => setGuestName(e.target.value)} />
+                      <input className="ck-input" type="email" placeholder="Email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} />
+                      <input className="ck-input" type="tel" placeholder="Phone" value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} />
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.82rem', color: '#555' }}>
+                      <div><strong style={{ color: DARK_NAVY }}>Name:</strong> {guestName}</div>
+                      <div><strong style={{ color: DARK_NAVY }}>Email:</strong> {guestEmail}</div>
+                      <div><strong style={{ color: DARK_NAVY }}>Phone:</strong> {guestPhone}</div>
+                    </div>
+                  )}
                 </div>
 
-                <div
-                  style={{
-                    borderTop: '1px solid #E8E8E8',
-                    padding: '1.5rem',
-                    paddingTop: '1rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.5rem',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: '0.9rem',
-                      color: '#555',
-                    }}
-                  >
-                    <span>Check-in:</span>
-                    <span style={{ fontWeight: 500, color: DARK_NAVY }}>
-                      {checkInParam ? new Date(checkInParam).toLocaleDateString() : 'N/A'}
-                    </span>
+                {/* Room card — BELOW guest details */}
+                <div style={{ background: '#FFFFFF', borderRadius: isMobile ? '1rem' : '1.5rem', overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
+                  {room.photos && room.photos.length > 0 ? (
+                    <div style={{ position: 'relative', width: '100%', height: isMobile ? '200px' : '300px', flexShrink: 0, background: '#F0F0F0' }}>
+                      <img src={`${STRAPI_URL}${room.photos[currentPhotoIndex].url}`} alt={`${room.title} - slide ${currentPhotoIndex + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <div style={{ position: 'absolute', bottom: '1rem', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.6)', color: 'white', padding: '0.2rem 0.8rem', borderRadius: '9999px', fontSize: '0.75rem' }}>
+                        {currentPhotoIndex + 1} / {room.photos.length}
+                      </div>
+                      <button onClick={goToPrevPhoto} type="button" style={{ position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}>‹</button>
+                      <button onClick={goToNextPhoto} type="button" style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}>›</button>
+                    </div>
+                  ) : (
+                    <div style={{ width: '100%', height: isMobile ? '200px' : '300px', background: '#F0F0F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>No Room Image</div>
+                  )}
+
+                  <div style={{ padding: isMobile ? '1rem' : '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: DARK_NAVY, marginBottom: '0.25rem' }}>{room.title}</h3>
+                    <p style={{ color: '#666', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      <GuestIcon size={14} color="#666" /> {room.capacity || 4} Guests
+                      <BedIcon size={14} color="#666" /> {room.bed_type || '2 Beds'}
+                    </p>
                   </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: '0.9rem',
-                      color: '#555',
-                    }}
-                  >
-                    <span>Check-out:</span>
-                    <span style={{ fontWeight: 500, color: DARK_NAVY }}>
-                      {checkOutParam ? new Date(checkOutParam).toLocaleDateString() : 'N/A'}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: '0.9rem',
-                      color: '#555',
-                    }}
-                  >
-                    <span>Nights:</span>
-                    <span style={{ fontWeight: 500, color: DARK_NAVY }}>{nights}</span>
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: '1.2rem',
-                      fontWeight: 700,
-                      color: DARK_NAVY,
-                      marginTop: '0.5rem',
-                      paddingTop: '0.5rem',
-                      borderTop: '1px solid #E8E8E8',
-                    }}
-                  >
-                    <span>Total Price:</span>
-                    <span style={{ color: GOLD }}>ETB {total}</span>
+
+                  <div style={{ borderTop: '1px solid #E8E8E8', paddingTop: '1rem', paddingRight: isMobile ? '1rem' : '1.5rem', paddingBottom: isMobile ? '1rem' : '1.5rem', paddingLeft: isMobile ? '1rem' : '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#555' }}>
+                      <span>Check-in:</span>
+                      <span style={{ fontWeight: 500, color: DARK_NAVY }}>{checkInParam ? new Date(checkInParam).toLocaleDateString() : 'N/A'}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#555' }}>
+                      <span>Check-out:</span>
+                      <span style={{ fontWeight: 500, color: DARK_NAVY }}>{checkOutParam ? new Date(checkOutParam).toLocaleDateString() : 'N/A'}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#555' }}>
+                      <span>Nights:</span>
+                      <span style={{ fontWeight: 500, color: DARK_NAVY }}>{nights}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 700, color: DARK_NAVY, marginTop: '0.4rem', paddingTop: '0.5rem', borderTop: '1px solid #E8E8E8' }}>
+                      <span>Total:</span>
+                      <span style={{ color: GOLD }}>ETB {total}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </ScrollReveal>
 
-            {/* ─── RIGHT: Form ─── */}
-            <ScrollReveal delay={300}>
-              <form
-                onSubmit={handleSubmit}
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: '1.5rem',
-                  padding: '1.5rem',
-                  boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem',
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: '1.25rem',
-                    fontWeight: 600,
-                    color: DARK_NAVY,
-                    marginBottom: '0.25rem',
-                  }}
-                >
-                  Guest Details
-                </h3>
+            {/* RIGHT column — payment */}
+            <ScrollReveal delay={200}>
+              <form onSubmit={handleSubmit} style={{ background: '#FFFFFF', borderRadius: isMobile ? '1rem' : '1.5rem', boxShadow: '0 10px 40px rgba(0,0,0,0.06)', padding: isMobile ? '1.15rem' : '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
 
-                {[
-                  { label: 'Full Name *', name: 'name', type: 'text', placeholder: 'John Doe' },
-                  {
-                    label: 'Email *',
-                    name: 'email',
-                    type: 'email',
-                    placeholder: 'you@example.com',
-                  },
-                  {
-                    label: 'Phone Number *',
-                    name: 'phone',
-                    type: 'tel',
-                    placeholder: '+251 911 123 456',
-                  },
-                ].map((f) => (
-                  <div key={f.name}>
-                    <label
-                      style={{
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        color: '#777',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        display: 'block',
-                        marginBottom: '0.35rem',
-                      }}
-                    >
-                      {f.label}
-                    </label>
-                    <input
-                      type={f.type}
-                      name={f.name}
-                      value={(formData as any)[f.name]}
-                      onChange={handleChange}
-                      placeholder={f.placeholder}
-                      required
-                      style={{
-                        width: '100%',
-                        padding: '0.7rem',
-                        border: '1px solid #E0E0E0',
-                        borderRadius: '0.5rem',
-                        outline: 'none',
-                      }}
-                    />
-                  </div>
-                ))}
-
+                {/* Bank tiles */}
                 <div>
-                  <label
-                    style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      color: '#777',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      display: 'block',
-                      marginBottom: '0.35rem',
-                    }}
-                  >
-                    Payment Method *
-                  </label>
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: isMobile ? 'column' : 'row',
-                      gap: '0.5rem',
-                    }}
-                  >
-                    {[
-                      { v: 'bank_transfer', label: 'Bank Transfer' },
-                      { v: 'cash', label: 'Cash on Arrival' },
-                    ].map((m) => (
-                      <label
-                        key={m.v}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          padding: '0.5rem 1rem',
-                          border: `2px solid ${
-                            formData.payment_method === m.v ? GOLD : '#E0E0E0'
-                          }`,
-                          borderRadius: '0.5rem',
-                          cursor: 'pointer',
-                          background:
-                            formData.payment_method === m.v ? '#F9F6F0' : 'transparent',
-                          flex: 1,
-                          justifyContent: 'center',
-                        }}
+                  <label className="ck-label">Choose Your Bank</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {banks.map((b) => (
+                      <button
+                        key={b.bank_code}
+                        type="button"
+                        title={b.display_name}
+                        aria-label={b.display_name}
+                        className={`bank-tile${paymentBank === b.bank_code ? ' sel' : ''}`}
+                        onClick={() => { setPaymentBank(b.bank_code); setShowQr(false); }}
                       >
-                        <input
-                          type="radio"
-                          name="payment_method"
-                          value={m.v}
-                          checked={formData.payment_method === m.v}
-                          onChange={handlePaymentMethodChange}
-                        />
-                        {m.label}
-                      </label>
+                        {b.logo_url ? (
+                          <img src={b.logo_url} alt={b.display_name} className="bank-logo-img" />
+                        ) : (
+                          <div className="bank-logo-fallback">{shortLabel(b.display_name)}</div>
+                        )}
+                      </button>
                     ))}
+                  </div>
+                  {selectedBank && (
+                    <div style={{ fontSize: '0.72rem', color: '#666', marginTop: '0.5rem', textAlign: 'center' }}>
+                      Selected: <strong style={{ color: DARK_NAVY }}>{selectedBank.display_name}</strong>
+                    </div>
+                  )}
+                </div>
+
+                {/* Account info */}
+                {selectedBank && (
+                  <div style={{ background: '#FBFBFB', borderRadius: '0.65rem', padding: '0.9rem 1rem', border: '1px solid #EEE' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <div>
+                        <div style={{ fontSize: '0.72rem', color: '#888', marginBottom: '0.15rem' }}>Pay to</div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: DARK_NAVY, display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ fontFamily: 'monospace' }}>{selectedBank.account_number || '—'}</span>
+                          {selectedBank.account_number && (
+                            <button
+                              type="button"
+                              className={`copy-btn${copied ? ' copied' : ''}`}
+                              onClick={copyAccountNumber}
+                              title="Copy account number"
+                            >
+                              {copied ? '✓ Copied' : '📋 Copy'}
+                            </button>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: '#666' }}>
+                          {selectedBank.account_name || ''}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#888', marginBottom: '0.15rem' }}>Amount</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: GOLD }}>ETB {total}</div>
+                      </div>
+                    </div>
+                    {selectedBank.qr_url && (
+                      <div style={{ marginTop: '0.6rem' }}>
+                        <button type="button" onClick={() => setShowQr((v) => !v)} style={{ background: 'none', border: 'none', color: DARK_NAVY, fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                          {showQr ? 'Hide QR code' : 'Show QR code'}
+                        </button>
+                        {showQr && (
+                          <div style={{ marginTop: '0.5rem', textAlign: 'center' }}>
+                            <img src={selectedBank.qr_url} alt="" style={{ width: '150px', height: '150px', objectFit: 'contain' }} />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Verify mode toggle */}
+                <div>
+                  <label className="ck-label">How will you verify?</label>
+                  <div className="ck-toggle">
+                    <label className={verifyMode === 'reference' ? 'sel' : ''}>
+                      <input type="radio" name="mode" value="reference" checked={verifyMode === 'reference'} onChange={() => setVerifyMode('reference')} style={{ display: 'none' }} />
+                      Enter reference
+                    </label>
+                    <label className={verifyMode === 'image' ? 'sel' : ''}>
+                      <input type="radio" name="mode" value="image" checked={verifyMode === 'image'} onChange={() => setVerifyMode('image')} style={{ display: 'none' }} />
+                      Upload receipt
+                    </label>
                   </div>
                 </div>
 
-                {formData.payment_method === 'bank_transfer' && banks.length > 0 && (
+                {/* Reference mode */}
+                {verifyMode === 'reference' && selectedBank && (
                   <div>
-                    <label
-                      style={{
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        color: '#777',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        display: 'block',
-                        marginBottom: '0.6rem',
-                      }}
-                    >
-                      Choose your bank *
+                    <input className="ck-input" placeholder={selectedBank.reference_placeholder} value={reference} onChange={(e) => setReference(e.target.value)} />
+                    <p style={{ fontSize: '0.72rem', color: '#777', marginTop: '0.5rem', lineHeight: 1.5 }}>
+                      <strong style={{ color: DARK_NAVY }}>Where to find it:</strong> {selectedBank.reference_hint}
+                    </p>
+                  </div>
+                )}
+
+                {/* Upload mode */}
+                {verifyMode === 'image' && (
+                  <div>
+                    <label htmlFor="ck-file" style={{ display: 'block', border: '2px dashed #C8A87C', borderRadius: '0.65rem', padding: '1.15rem', textAlign: 'center', cursor: 'pointer', background: imageFile ? '#FBF7F0' : '#FDFDFD' }}>
+                      <div style={{ fontSize: '1.15rem', marginBottom: '0.2rem' }}>📎</div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: DARK_NAVY }}>
+                        {imageFile ? imageFile.name : 'Choose receipt image'}
+                      </div>
+                      <div style={{ fontSize: '0.68rem', color: '#999', marginTop: '0.15rem' }}>
+                        JPG, PNG, GIF, WebP · max 8 MB
+                      </div>
                     </label>
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: '0.5rem',
-                        marginBottom: '1.25rem',
-                        flexWrap: 'wrap',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {banks.map((b) => (
-                        <button
-                          type="button"
-                          key={b.bank_code}
-                          className={`bank-icon-btn${
-                            formData.payment_bank === b.bank_code ? ' selected' : ''
-                          }`}
-                          onClick={() => handleBankChange(b.bank_code)}
-                        >
-                          {b.logo_url ? (
-                            <img
-                              src={b.logo_url}
-                              alt={b.display_name}
-                              className="bank-icon-img"
-                            />
-                          ) : (
-                            <div className="bank-icon-fallback">
-                              {shortLabel(b.display_name)}
-                            </div>
-                          )}
-                          <span className="bank-icon-label">{b.display_name}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Selected bank card */}
-                    {selectedBank && (
-                      <div
-                        style={{
-                          border: `1px solid ${GOLD}`,
-                          borderRadius: '1rem',
-                          padding: '1.25rem',
-                          background: '#FBFBFB',
-                          marginBottom: '1.25rem',
-                        }}
-                      >
-                        <h4
-                          style={{
-                            fontSize: '1rem',
-                            fontWeight: 700,
-                            color: DARK_NAVY,
-                            marginBottom: '0.6rem',
-                            textAlign: 'center',
-                          }}
-                        >
-                          {selectedBank.display_name}
-                        </h4>
-
-                        <div>
-                          <p
-                            style={{
-                              fontSize: '0.8rem',
-                              color: '#555',
-                              marginBottom: '0.25rem',
-                            }}
-                          >
-                            <strong>Account Name:</strong>{' '}
-                            {selectedBank.account_name || 'N/A'}
-                          </p>
-                          <p
-                            style={{
-                              fontSize: '0.8rem',
-                              color: '#555',
-                              marginBottom: '0.5rem',
-                            }}
-                          >
-                            <strong>Account Number:</strong>{' '}
-                            <span
-                              style={{
-                                fontFamily: 'monospace',
-                                background: '#FFFFFF',
-                                padding: '0.15rem 0.4rem',
-                                borderRadius: '0.25rem',
-                                border: '1px solid #E8E8E8',
-                                fontSize: '0.85rem',
-                              }}
-                            >
-                              {selectedBank.account_number || 'N/A'}
-                            </span>
-                          </p>
-                          <p
-                            style={{
-                              fontSize: '0.85rem',
-                              color: DARK_NAVY,
-                              fontWeight: 700,
-                              marginBottom: '0.3rem',
-                            }}
-                          >
-                            Amount to send: ETB {total}
-                          </p>
-
-                          {selectedBank.qr_url && (
-                            <>
-                              <button
-                                type="button"
-                                className="show-qr-btn"
-                                onClick={() => setShowQr((v) => !v)}
-                              >
-                                {showQr ? '▾ Hide QR code' : '▸ Show QR code'}
-                              </button>
-                              {showQr && (
-                                <div className="qr-expand">
-                                  <img
-                                    src={selectedBank.qr_url}
-                                    alt={`${selectedBank.display_name} QR`}
-                                    style={{
-                                      width: '200px',
-                                      height: '200px',
-                                      objectFit: 'contain',
-                                    }}
-                                  />
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Reference input */}
-                    {selectedBank && (
-                      <>
-                        <label
-                          style={{
-                            fontSize: '0.65rem',
-                            fontWeight: 600,
-                            color: '#777',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            display: 'block',
-                            marginBottom: '0.35rem',
-                          }}
-                        >
-                          {selectedBank.reference_label} *
-                        </label>
-                        <input
-                          type="text"
-                          name="payment_reference"
-                          value={formData.payment_reference}
-                          onChange={handleChange}
-                          required
-                          placeholder={selectedBank.reference_placeholder}
-                          style={{
-                            width: '100%',
-                            padding: '0.7rem',
-                            border: '1px solid #E0E0E0',
-                            borderRadius: '0.5rem',
-                            outline: 'none',
-                          }}
-                        />
-                        <p
-                          style={{
-                            fontSize: '0.75rem',
-                            color: '#777',
-                            marginTop: '0.4rem',
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          <strong style={{ color: DARK_NAVY }}>Where do I find this?</strong>{' '}
-                          {selectedBank.reference_hint}
-                        </p>
-                      </>
-                    )}
+                    <input id="ck-file" ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" style={{ display: 'none' }} onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return setImageFile(null);
+                      if (f.size > 8 * 1024 * 1024) { showAlert('Image is too large (max 8MB).', 'error'); return; }
+                      setImageFile(f);
+                    }} />
                   </div>
                 )}
 
-                {/* Failure fallback */}
-                {failedState.show && (
-                  <div
-                    style={{
-                      background: 'rgba(220, 53, 69, 0.06)',
-                      border: '1px solid rgba(220, 53, 69, 0.25)',
-                      borderRadius: '0.75rem',
-                      padding: '1rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.75rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                      <div style={{ fontSize: '1.25rem' }}>⚠️</div>
-                      <div>
-                        <p
-                          style={{
-                            fontWeight: 700,
-                            color: '#B02A37',
-                            fontSize: '0.85rem',
-                            marginBottom: '0.15rem',
-                          }}
-                        >
-                          We couldn't find this reference
-                        </p>
-                        <p
-                          style={{
-                            fontSize: '0.8rem',
-                            color: '#555',
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          {failedState.message}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        borderTop: '1px dashed rgba(220,53,69,0.25)',
-                        paddingTop: '0.75rem',
-                      }}
-                    >
-                      <p
-                        style={{
-                          fontSize: '0.8rem',
-                          color: DARK_NAVY,
-                          fontWeight: 600,
-                          marginBottom: '0.25rem',
-                        }}
-                      >
-                        Option 1 — Fix the reference and try again
-                      </p>
-                      <p style={{ fontSize: '0.75rem', color: '#666' }}>
-                        Edit the reference above and click Confirm Booking again.
-                      </p>
-                    </div>
-
-                    <div
-                      style={{
-                        borderTop: '1px dashed rgba(220,53,69,0.25)',
-                        paddingTop: '0.75rem',
-                      }}
-                    >
-                      <p
-                        style={{
-                          fontSize: '0.8rem',
-                          color: DARK_NAVY,
-                          fontWeight: 600,
-                          marginBottom: '0.25rem',
-                        }}
-                      >
-                        Option 2 — Upload a screenshot of your receipt
-                      </p>
-                      <p
-                        style={{
-                          fontSize: '0.75rem',
-                          color: '#666',
-                          marginBottom: '0.5rem',
-                        }}
-                      >
-                        We'll read the reference directly from the image. JPG, PNG, GIF, or WebP —
-                        max 8 MB.
-                      </p>
-
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/gif,image/webp"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (!f) {
-                            setImageFile(null);
-                            return;
-                          }
-                          if (f.size > 8 * 1024 * 1024) {
-                            showAlert('Image is too large. Max 8 MB.', 'error');
-                            setImageFile(null);
-                            return;
-                          }
-                          setImageFile(f);
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem',
-                          border: '1px dashed #C8A87C',
-                          borderRadius: '0.5rem',
-                          background: '#FFFFFF',
-                          fontSize: '0.8rem',
-                        }}
-                      />
-
-                      {imageFile && (
-                        <p
-                          style={{
-                            fontSize: '0.75rem',
-                            color: '#555',
-                            marginTop: '0.35rem',
-                          }}
-                        >
-                          Selected: <strong>{imageFile.name}</strong>
-                        </p>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={handleImageVerify}
-                        disabled={!imageFile || uploadingImage}
-                        style={{
-                          marginTop: '0.6rem',
-                          width: '100%',
-                          padding: '0.7rem',
-                          background: imageFile && !uploadingImage ? GOLD : '#DDD',
-                          color: imageFile && !uploadingImage ? DARK_NAVY : '#888',
-                          fontWeight: 700,
-                          border: 'none',
-                          borderRadius: '0.5rem',
-                          cursor:
-                            imageFile && !uploadingImage ? 'pointer' : 'not-allowed',
-                          fontSize: '0.85rem',
-                        }}
-                      >
-                        {uploadingImage ? 'Reading receipt...' : 'Verify with receipt image'}
-                      </button>
-                    </div>
-
-                    <div
-                      style={{
-                        borderTop: '1px dashed rgba(220,53,69,0.25)',
-                        paddingTop: '0.5rem',
-                        fontSize: '0.75rem',
-                        color: '#666',
-                      }}
-                    >
-                      Still stuck? Contact us: <strong>{supportPhone}</strong> ·{' '}
-                      <strong>{supportEmail}</strong>
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  style={{
-                    width: '100%',
-                    padding: '0.85rem',
-                    background: DARK_NAVY,
-                    color: '#FFFFFF',
-                    fontWeight: 700,
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    fontSize: '0.9rem',
-                    cursor: submitting ? 'wait' : 'pointer',
-                    marginTop: '0.5rem',
-                    opacity: submitting ? 0.7 : 1,
-                  }}
-                >
-                  {submitting
-                    ? formData.payment_method === 'bank_transfer'
-                      ? 'Verifying payment...'
-                      : 'Processing...'
-                    : 'Confirm Booking'}
+                <button type="submit" className="ck-btn" disabled={submitting}>
+                  {submitting ? 'Verifying…' : 'Confirm Booking'}
                 </button>
+
+                <p style={{ fontSize: '0.68rem', color: '#aaa', textAlign: 'center', margin: 0 }}>
+                  Need help? {supportPhone} · {supportEmail}
+                </p>
               </form>
             </ScrollReveal>
           </div>
@@ -1409,20 +628,7 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense
-      fallback={
-        <div
-          style={{
-            minHeight: '60vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <p style={{ color: '#666666' }}>Loading checkout...</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: '#666' }}>Loading…</p></div>}>
       <CheckoutContent />
     </Suspense>
   );

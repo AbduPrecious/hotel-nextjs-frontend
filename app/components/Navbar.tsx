@@ -1,10 +1,12 @@
 // app/components/Navbar.tsx
 'use client';
 
+
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from './ThemeProvider';
+import UserNavMenu from './UserNavMenu';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const GOLD_GRADIENT = 'linear-gradient(135deg, #C8A87C 0%, #E8D5B8 50%, #C8A87C 100%)';
@@ -161,18 +163,8 @@ export default function Navbar() {
 
           {!isMobile && <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.1)' }} />}
 
-          {/* ─── SPLIT LOGIN / REGISTER ───────────────────────────── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Link href="/login" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.color = '#C8A87C'} onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
-              Login
-            </Link>
-            
-            <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
-            
-            <Link href="/register" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.color = '#C8A87C'} onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
-              Register
-            </Link>
-          </div>
+                   {/* ─── USER MENU (Login/Register OR User dropdown) ─────────── */}
+          <UserNavMenu />
 
           {!isMobile && <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.1)' }} />}
 
