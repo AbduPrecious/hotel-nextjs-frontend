@@ -3,6 +3,7 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { saveAuth } from '../lib/auth';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -41,7 +42,7 @@ function LoginInner() {
         throw new Error(data.error?.message || 'Invalid email or password.');
       }
 
- saveAuth(data.jwt, data.user.email, data.user.username || 'Guest');
+      saveAuth(data.jwt, data.user.email, data.user.username || 'Guest');
 
       // Honor redirect
       if (redirect) {
