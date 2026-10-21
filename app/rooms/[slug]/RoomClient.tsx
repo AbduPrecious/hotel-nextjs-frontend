@@ -426,11 +426,11 @@ saveAuth(data.jwt, data.user.email, data.user.username || 'Guest');
                 </div>
                 <div>
                   <label style={{ fontSize: '0.7rem', fontWeight: 600, color: DARK_NAVY, display: 'block', marginBottom: '0.2rem' }}>CHECK - IN <span style={{ color: '#CC3333' }}>*</span></label>
-                  <input type="date" name="check_in" value={formData.check_in} onChange={handleChange} required className="form-input" />
+                 <input type="date" name="check_in" value={formData.check_in} onChange={handleChange} min={new Date().toISOString().split('T')[0]} required className="form-input" />
                 </div>
                 <div>
                   <label style={{ fontSize: '0.7rem', fontWeight: 600, color: DARK_NAVY, display: 'block', marginBottom: '0.2rem' }}>CHECK - OUT <span style={{ color: '#CC3333' }}>*</span></label>
-                  <input type="date" name="check_out" value={formData.check_out} onChange={handleChange} required className="form-input" />
+                  <input type="date" name="check_out" value={formData.check_out} onChange={handleChange} min={formData.check_in || new Date().toISOString().split('T')[0]} required className="form-input" />
                 </div>
 
                 {isRoomBooked && (
