@@ -9,6 +9,7 @@ const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
 const GOLD = '#C8A87C';
 const DARK_NAVY = '#17232E';
 
+
 function RegisterInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -73,7 +74,6 @@ function RegisterInner() {
         return;
       }
 
-      // Do NOT auto-login. Send them to login (with redirect preserved).
       const loginHref = redirect
         ? `/login?redirect=${encodeURIComponent(redirect)}`
         : '/login';
@@ -84,6 +84,7 @@ function RegisterInner() {
       setLoading(false);
     }
   };
+
 
   const loginHref = redirect
     ? `/login?redirect=${encodeURIComponent(redirect)}`
@@ -102,6 +103,14 @@ function RegisterInner() {
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
             {redirect ? 'Create an account to continue your booking' : 'Create an account to manage your stays'}
           </p>
+        </div>
+
+
+        {/* Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', fontWeight: 500 }}>OR</span>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
         </div>
 
         {error && (
