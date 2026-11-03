@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getRoomById } from '../lib/api';
 import ScrollReveal from '../components/ScrollReveal';
+import LoadingScreen from '../components/LoadingScreen';
 import { useAlert } from '../context/AlertContext';
 import { BedIcon, GuestIcon } from '../components/Icons';
 
@@ -306,8 +307,8 @@ function CheckoutContent() {
   const supportEmail = paymentMethods?.support_email || DEFAULT_SUPPORT_EMAIL;
 
   if (loading) {
-    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BEIGE }}>Loading…</div>;
-  }
+  return <LoadingScreen message="Loading checkout…" />;
+}
 
   if (!room || !roomId) {
     return (
@@ -628,7 +629,7 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: '#666' }}>Loading…</p></div>}>
+  <Suspense fallback={<LoadingScreen message="Loading…" fullScreen={false} />}>
       <CheckoutContent />
     </Suspense>
   );

@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { getGalleryImages, getGalleryVideos } from '../lib/api';
+import LoadingScreen from '../components/LoadingScreen';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const GOLD = '#A89279'; // Carmelina's signature gold/beige accent
@@ -273,14 +274,7 @@ export default function GalleryPage() {
   };
 
   if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BEIGE }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', border: `3px solid ${GOLD}`, borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto', animation: 'spin 0.8s linear infinite' }}></div>
-          <p style={{ marginTop: '16px', color: '#666', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Loading gallery...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading gallery…" />;
   }
 
   return (

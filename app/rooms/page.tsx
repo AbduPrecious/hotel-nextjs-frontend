@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { getAvailableRooms } from '../lib/api';
 import ScrollReveal from '../components/ScrollReveal';
 import { BedIcon, GuestIcon } from '../components/Icons';
+import LoadingScreen from '../components/LoadingScreen';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
@@ -133,13 +134,8 @@ function RoomsContent() {
     setPriceFilter('all');
   };
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '48px', height: '48px', border: '4px solid #C8A87C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-        <p style={{ marginTop: '16px', color: '#666666', letterSpacing: '0.05em', fontSize: '12px', textTransform: 'uppercase' }}>Loading accommodations...</p>
-      </div>
-    );
+if (loading) {
+    return <LoadingScreen message="Loading rooms…" />;
   }
 
   return (

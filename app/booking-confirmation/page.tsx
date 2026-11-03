@@ -4,6 +4,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import LoadingScreen from '../components/LoadingScreen';
 import { GuestIcon, BedIcon } from '../components/Icons';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -11,16 +12,8 @@ const GOLD = '#C8A87C';
 const DARK_NAVY = '#17232E';
 const BEIGE = '#ECEAE6';
 
-// ─── Loading Fallback ──────────────────────────────────
 function LoadingFallback() {
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BEIGE, padding: '1rem' }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ width: '64px', height: '64px', border: `4px solid ${GOLD}`, borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto', animation: 'spin 1s linear infinite' }}></div>
-        <p style={{ marginTop: '16px', color: '#666666', letterSpacing: '0.05em', fontSize: '12px', textTransform: 'uppercase' }}>Loading confirmation...</p>
-      </div>
-    </div>
-  );
+  return <LoadingScreen message="Loading confirmation…" />;
 }
 
 // ─── Status config ──────────────────────────────────

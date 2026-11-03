@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAlert } from '../../../context/AlertContext';
 import { BedIcon, GuestIcon } from '../../../components/Icons';
 import ScrollReveal from '../../../components/ScrollReveal';
+import LoadingScreen from '../../../components/LoadingScreen';
 
 const STRAPI_BASE = process.env.NEXT_PUBLIC_STRAPI_URL || 'https://api-hotel.qenenia.com';
 const API_URL = `${STRAPI_BASE}/api`;
@@ -155,33 +156,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     });
   };
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: '80vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: BEIGE,
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              background: GOLD,
-              borderRadius: '50%',
-              margin: '0 auto',
-              opacity: 0.5,
-            }}
-          ></div>
-          <p style={{ marginTop: '16px', color: '#666' }}>Loading booking...</p>
-        </div>
-      </div>
-    );
-  }
+ import LoadingScreen from '../../../components/LoadingScreen';
 
   if (error || !booking) {
     return (

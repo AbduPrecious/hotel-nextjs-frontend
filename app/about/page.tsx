@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { renderRichText } from '../lib/api';
+import LoadingScreen from '../components/LoadingScreen';
 import AnimatedCounter from '../components/AnimatedCounter';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -62,16 +63,9 @@ export default function AboutPage() {
     fetchData();
   }, []);
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', border: '4px solid #C8A87C', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto', animation: 'spin 1s linear infinite' }}></div>
-          <p style={{ marginTop: '16px', color: '#666666' }}>Loading About Page...</p>
-        </div>
-      </div>
-    );
-  }
+ if (loading) {
+  return <LoadingScreen message="Loading about…" />;
+}
 
   const visionImgUrl = buildImageUrl(getMediaUrl(about?.Section_Image));
 

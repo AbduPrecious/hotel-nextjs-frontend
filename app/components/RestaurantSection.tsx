@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ScrollReveal from './ScrollReveal';
+import LoadingScreen from './LoadingScreen';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const GOLD = '#C8A87C';
@@ -114,34 +115,8 @@ export default function RestaurantSection() {
   };
 
   if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: '400px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#F5F3EF',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              border: '3px solid #C8A87C',
-              borderTopColor: 'transparent',
-              borderRadius: '50%',
-              margin: '0 auto',
-              animation: 'spin 1s linear infinite',
-            }}
-          ></div>
-          <p style={{ marginTop: '12px', color: '#666', fontSize: '0.85rem' }}>Loading restaurant...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading…" fullScreen={false} />;
   }
-
   if (slides.length === 0) return null;
 
   const currentSlide = slides[currentIndex];

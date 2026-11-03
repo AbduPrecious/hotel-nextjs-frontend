@@ -10,6 +10,7 @@ import ScrollReveal from './components/ScrollReveal';
 import RestaurantSection from './components/RestaurantSection';
 import { BedIcon, GuestIcon } from './components/Icons';
 import Image from 'next/image';
+import LoadingScreen from './components/LoadingScreen';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const GOLD = '#C8A87C';
@@ -330,16 +331,10 @@ export default function Home() {
       link.href = fullUrl;
     }
   }, [hotel]);
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0A' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '64px', height: '64px', border: '4px solid #C8A87C', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto', animation: 'spin 1s linear infinite' }}></div>
-          <p style={{ marginTop: '16px', color: '#A0A0A0' }}>Loading...</p>
-        </div>
-      </div>
-    );
+   if (loading) {
+    return <LoadingScreen message="Loading…" />;
   }
+
   const hotelName = hotel?.name || 'Hotel';
 
   return (
