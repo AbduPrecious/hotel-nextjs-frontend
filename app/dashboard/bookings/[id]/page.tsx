@@ -156,7 +156,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     });
   };
 
- import LoadingScreen from '../../../components/LoadingScreen';
+
 
   if (error || !booking) {
     return (
